@@ -532,6 +532,7 @@ function initActionButtons() {
       text.textContent = 'Generating 4-Page PDF...';
 
       try {
+        // Try server-rendered PDF first (works on Node.js / Puppeteer server)
         const response = await fetch('/api/diagnostic/pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -553,13 +554,12 @@ function initActionButtons() {
           window.URL.revokeObjectURL(downloadUrl);
           showToast('PDF blueprint downloaded successfully!');
         } else {
-          showToast('Could not compile PDF directly. Opening print-ready executive blueprint...');
-          openPrintReadyReport(cachedEvaluationData);
+          // Cloudflare Edge isolate fallback: compile PDF directly in browser via html2pdf
+          await generateClientSidePdf(cachedEvaluationData);
         }
       } catch (err) {
-        console.error('PDF error:', err);
-        showToast('Direct PDF export error. Opening print-ready blueprint...');
-        openPrintReadyReport(cachedEvaluationData);
+        console.warn('Server PDF unavailable, compiling client-side PDF:', err);
+        await generateClientSidePdf(cachedEvaluationData);
       } finally {
         pdfBtn.disabled = false;
         spinner.classList.add('d-none');
@@ -598,9 +598,9 @@ function initActionButtons() {
 }
 
 /**
- * Opens print-ready HTML report with one-click print/save as PDF
+ * Direct client-side PDF compilation using html2pdf.js
  */
-async function openPrintReadyReport(data) {
+async function generateClientSidePdf(data) {
   try {
     const response = await fetch('/api/diagnostic/html-report', {
       method: 'POST',
@@ -608,12 +608,70 @@ async function openPrintReadyReport(data) {
       body: JSON.stringify(data)
     });
     const html = await response.text();
-    const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-  } catch (e) {
-    showToast('Failed to open preview window.');
+    const safeName = (data.companyName || 'SME').replace(/[^a-zA-Z0-9]/g, '_');
+
+    if (window.html2pdf) {
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '800px';
+      container.innerHTML = html;
+      document.body.appendChild(container);
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Exabytes_Blueprint_${safeName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await window.html2pdf().set(opt).from(container).save();
+      container.remove();
+      showToast('Executive PDF Blueprint downloaded successfully!');
+    } else {
+      // Fallback: download the self-contained HTML report
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `Exabytes_Blueprint_${safeName}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      showToast('Blueprint file downloaded successfully!');
+    }
+  } catch (err) {
+    console.error('Client PDF compilation error:', err);
+    showToast('Failed to compile PDF. Opening print-ready preview instead...');
+    openPrintReadyReport(data);
   }
+}
+
+/**
+ * Opens print-ready HTML report with one-click print/save as PDF (bypasses popup blockers)
+ */
+function openPrintReadyReport(data) {
+  const win = window.open('about:blank', '_blank');
+  fetch('/api/diagnostic/html-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.text())
+    .then(html => {
+      if (win) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+      }
+    })
+    .catch(err => {
+      if (win) win.close();
+      showToast('Failed to open preview window.');
+    });
 }
 
 /**
