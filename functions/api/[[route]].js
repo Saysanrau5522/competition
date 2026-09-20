@@ -11,7 +11,7 @@ import {
   generateAiDynamicQuestion
 } from '../../execution/calculate_engine.js';
 
-import { buildReportHtml } from '../../execution/generate_pdf.js';
+import { buildReportHtml } from '../../execution/report_template.js';
 import {
   fetchSheetLeads,
   appendSheetLead,
