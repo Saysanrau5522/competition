@@ -425,8 +425,8 @@ function getDynamicFollowUpQuestion(params = {}) {
  * AI-Augmented dynamic follow-up question generator using Gemini 3.6 Flash
  * Falls back cleanly to getDynamicFollowUpQuestion if API is unavailable
  */
-async function generateAiDynamicQuestion(params = {}) {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function generateAiDynamicQuestion(params = {}, passedApiKey = null) {
+  const apiKey = passedApiKey || process.env.GEMINI_API_KEY;
   const fallback = getDynamicFollowUpQuestion(params);
 
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
