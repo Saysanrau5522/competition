@@ -1,5 +1,5 @@
 /**
- * Cloudflare Pages Functions API Router
+ * Cloudflare Pages Functions API Router with Health & Diagnostics
  * Handles all /api/* requests natively at Cloudflare Edge
  */
 
@@ -12,10 +12,16 @@ import {
 } from '../../execution/calculate_engine.js';
 
 import { buildReportHtml } from '../../execution/generate_pdf.js';
-import { fetchSheetLeads, appendSheetLead, updateSheetLeadStatus } from '../google_sheets.js';
+import {
+  fetchSheetLeads,
+  appendSheetLead,
+  updateSheetLeadStatus,
+  getGoogleAccessToken,
+  cleanPrivateKey
+} from '../google_sheets.js';
 
 function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       'Content-Type': 'application/json',
@@ -68,7 +74,6 @@ const FALLBACK_SEED_LEADS = [
 
 export async function onRequest(context) {
   const { request, env, params } = context;
-  const url = new URL(request.url);
   const pathSegments = params.route || [];
   const fullPath = pathSegments.join('/');
 
@@ -83,7 +88,65 @@ export async function onRequest(context) {
     });
   }
 
+  // Clean environment variables (trimming whitespace & outer quotes)
+  const cleanEnv = {
+    ...env,
+    GEMINI_API_KEY: env.GEMINI_API_KEY ? env.GEMINI_API_KEY.trim().replace(/^["']|["']$/g, '') : '',
+    GOOGLE_SHEET_ID: env.GOOGLE_SHEET_ID ? env.GOOGLE_SHEET_ID.trim().replace(/^["']|["']$/g, '') : '',
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? env.GOOGLE_SERVICE_ACCOUNT_EMAIL.trim().replace(/^["']|["']$/g, '') : '',
+    GOOGLE_PRIVATE_KEY: cleanPrivateKey(env.GOOGLE_PRIVATE_KEY)
+  };
+
   try {
+    // 0. GET /api/health (Diagnostic Endpoint to easily verify Cloudflare Secrets)
+    if (fullPath === 'health' && request.method === 'GET') {
+      const checks = {
+        GEMINI_API_KEY: cleanEnv.GEMINI_API_KEY
+          ? `CONFIGURED (starts with ${cleanEnv.GEMINI_API_KEY.slice(0, 8)}...)`
+          : 'MISSING - Set in Cloudflare Pages Settings > Environment variables',
+        GOOGLE_SHEET_ID: cleanEnv.GOOGLE_SHEET_ID
+          ? `CONFIGURED (${cleanEnv.GOOGLE_SHEET_ID})`
+          : 'MISSING - Set in Cloudflare Pages Settings > Environment variables',
+        GOOGLE_SERVICE_ACCOUNT_EMAIL: cleanEnv.GOOGLE_SERVICE_ACCOUNT_EMAIL
+          ? `CONFIGURED (${cleanEnv.GOOGLE_SERVICE_ACCOUNT_EMAIL})`
+          : 'MISSING - Set in Cloudflare Pages Settings > Environment variables',
+        GOOGLE_PRIVATE_KEY: cleanEnv.GOOGLE_PRIVATE_KEY
+          ? `CONFIGURED (${cleanEnv.GOOGLE_PRIVATE_KEY.includes('BEGIN PRIVATE KEY') ? 'Valid PKCS8 Header' : 'Warning: Header not detected'})`
+          : 'MISSING - Set in Cloudflare Pages Settings > Environment variables'
+      };
+
+      // Test Google Sheets Auth
+      let googleAuthStatus = 'Not tested (missing credentials)';
+      let sheetsReadStatus = 'Not tested';
+      let leadsCount = 0;
+
+      if (cleanEnv.GOOGLE_SERVICE_ACCOUNT_EMAIL && cleanEnv.GOOGLE_PRIVATE_KEY) {
+        const tokenRes = await getGoogleAccessToken(cleanEnv.GOOGLE_SERVICE_ACCOUNT_EMAIL, cleanEnv.GOOGLE_PRIVATE_KEY);
+        if (typeof tokenRes === 'string') {
+          googleAuthStatus = 'SUCCESS (Google OAuth Token Generated)';
+          if (cleanEnv.GOOGLE_SHEET_ID) {
+            const leads = await fetchSheetLeads(cleanEnv);
+            sheetsReadStatus = `SUCCESS (Connected to Sheet ${cleanEnv.GOOGLE_SHEET_ID})`;
+            leadsCount = leads.length;
+          }
+        } else {
+          googleAuthStatus = `FAILED: ${tokenRes?.error || 'Unknown error'}`;
+        }
+      }
+
+      return jsonResponse({
+        status: 'online',
+        runtime: 'Cloudflare Pages Functions (Edge)',
+        environment_checks: checks,
+        google_sheets_connection: {
+          auth: googleAuthStatus,
+          read: sheetsReadStatus,
+          total_leads_in_sheet: leadsCount
+        },
+        troubleshooting_tip: 'If variables show MISSING, make sure you clicked Retry Deployment after saving your environment variables in Cloudflare!'
+      });
+    }
+
     // 1. POST /api/diagnostic/evaluate
     if (fullPath === 'diagnostic/evaluate' && request.method === 'POST') {
       const answers = await request.json();
@@ -103,8 +166,8 @@ export async function onRequest(context) {
       const products = mapExabytesProducts(scores, roi, companyData);
       const salesSheet = generateSalesCheatSheet(companyData, scores, roi, products);
 
-      // AI dynamic question using Gemini (or deterministic fallback)
-      const aiQuestion = await generateAiDynamicQuestion(companyData, env.GEMINI_API_KEY);
+      // AI dynamic question using Gemini
+      const aiQuestion = await generateAiDynamicQuestion(companyData, cleanEnv.GEMINI_API_KEY);
 
       return jsonResponse({
         companyName: companyData.companyName,
@@ -159,7 +222,7 @@ export async function onRequest(context) {
         ...leadData
       };
 
-      const syncOk = await appendSheetLead(env, leadRecord);
+      const syncOk = await appendSheetLead(cleanEnv, leadRecord);
 
       return jsonResponse({
         success: true,
@@ -172,7 +235,7 @@ export async function onRequest(context) {
 
     // 5. GET /api/appointments/booked
     if (fullPath === 'appointments/booked' && request.method === 'GET') {
-      let leads = await fetchSheetLeads(env);
+      let leads = await fetchSheetLeads(cleanEnv);
       if (!leads || leads.length === 0) {
         leads = FALLBACK_SEED_LEADS;
       }
@@ -189,7 +252,7 @@ export async function onRequest(context) {
 
     // 6. GET /api/crm/leads
     if (fullPath === 'crm/leads' && request.method === 'GET') {
-      let leads = await fetchSheetLeads(env);
+      let leads = await fetchSheetLeads(cleanEnv);
       const isLive = leads && leads.length > 0;
       if (!isLive) {
         leads = FALLBACK_SEED_LEADS;
@@ -208,7 +271,7 @@ export async function onRequest(context) {
       const body = await request.json();
       const newStatus = body.status;
 
-      const ok = await updateSheetLeadStatus(env, leadId, newStatus);
+      const ok = await updateSheetLeadStatus(cleanEnv, leadId, newStatus);
       return jsonResponse({ success: true, leadId, status: newStatus, synced: ok });
     }
 

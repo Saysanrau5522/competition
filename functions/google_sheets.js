@@ -1,60 +1,112 @@
 /**
- * Cloudflare Edge Compatible Google Sheets REST Client
- * Zero external npm dependencies. Uses standard fetch + Node crypto.
+ * Pure Web-Crypto Google Sheets REST Client for Cloudflare Pages Functions
+ * Works on all edge isolates with ZERO external npm dependencies.
  */
-import crypto from 'node:crypto';
+
+export function cleanPrivateKey(rawKey) {
+  if (!rawKey) return null;
+  let key = String(rawKey).trim();
+  // Strip outer quotes if copied from .env
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+    try {
+      key = JSON.parse(key);
+    } catch {
+      key = key.slice(1, -1);
+    }
+  }
+  // Convert literal \n to actual newlines
+  key = key.replace(/\\n/g, '\n');
+  return key;
+}
+
+function pemToDer(pem) {
+  const cleaned = cleanPrivateKey(pem);
+  const b64 = cleaned
+    .replace(/-----BEGIN [A-Z ]+-----/g, '')
+    .replace(/-----END [A-Z ]+-----/g, '')
+    .replace(/\s+/g, '');
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function base64UrlEncode(bytesOrString) {
+  let b64;
+  if (typeof bytesOrString === 'string') {
+    b64 = btoa(bytesOrString);
+  } else {
+    let binary = '';
+    const bytes = new Uint8Array(bytesOrString);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    b64 = btoa(binary);
+  }
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
 export async function getGoogleAccessToken(clientEmail, privateKey) {
   if (!clientEmail || !privateKey) return null;
 
-  let cleanedKey = privateKey;
-  if (typeof cleanedKey === 'string') {
-    if (cleanedKey.startsWith('"') && cleanedKey.endsWith('"')) {
-      try {
-        cleanedKey = JSON.parse(cleanedKey);
-      } catch (e) {
-        cleanedKey = cleanedKey.slice(1, -1);
-      }
+  try {
+    const cleanedKey = cleanPrivateKey(privateKey);
+    const der = pemToDer(cleanedKey);
+
+    const key = await crypto.subtle.importKey(
+      'pkcs8',
+      der,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const now = Math.floor(Date.now() / 1000);
+    const header = base64UrlEncode(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+    const claim = base64UrlEncode(JSON.stringify({
+      iss: clientEmail.trim(),
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now
+    }));
+
+    const sigBuffer = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      key,
+      new TextEncoder().encode(header + '.' + claim)
+    );
+
+    const jwt = header + '.' + claim + '.' + base64UrlEncode(sigBuffer);
+
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt
+      })
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error('Google OAuth Token Error:', errBody);
+      return { error: errBody };
     }
-    cleanedKey = cleanedKey.replace(/\\n/g, '\n');
+
+    const data = await res.json();
+    return data.access_token;
+  } catch (err) {
+    console.error('Crypto / Token generation error:', err);
+    return { error: err.message };
   }
-
-  const now = Math.floor(Date.now() / 1000);
-  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-  const claim = Buffer.from(JSON.stringify({
-    iss: clientEmail,
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
-    iat: now
-  })).toString('base64url');
-
-  const sign = crypto.createSign('RSA-SHA256');
-  sign.update(header + '.' + claim);
-  const signature = sign.sign(cleanedKey, 'base64url');
-  const jwt = header + '.' + claim + '.' + signature;
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt
-    })
-  });
-
-  if (!res.ok) {
-    console.error('Google OAuth Token Error:', await res.text());
-    return null;
-  }
-
-  const data = await res.json();
-  return data.access_token;
 }
 
 export async function fetchSheetLeads(env) {
-  const sheetId = env.GOOGLE_SHEET_ID;
-  const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
+  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
   const key = env.GOOGLE_PRIVATE_KEY;
 
   if (!sheetId || !email || !key) {
@@ -62,12 +114,12 @@ export async function fetchSheetLeads(env) {
   }
 
   try {
-    const token = await getGoogleAccessToken(email, key);
-    if (!token) return [];
+    const tokenResult = await getGoogleAccessToken(email, key);
+    if (!tokenResult || typeof tokenResult !== 'string') return [];
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A2:R`;
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${tokenResult}` }
     });
 
     if (!res.ok) {
@@ -109,8 +161,8 @@ export async function fetchSheetLeads(env) {
 }
 
 export async function appendSheetLead(env, lead) {
-  const sheetId = env.GOOGLE_SHEET_ID;
-  const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
+  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
   const key = env.GOOGLE_PRIVATE_KEY;
 
   if (!sheetId || !email || !key) {
@@ -118,8 +170,8 @@ export async function appendSheetLead(env, lead) {
   }
 
   try {
-    const token = await getGoogleAccessToken(email, key);
-    if (!token) return false;
+    const tokenResult = await getGoogleAccessToken(email, key);
+    if (!tokenResult || typeof tokenResult !== 'string') return false;
 
     const row = [
       lead.id || `EXA-${Date.now().toString().slice(-6)}`,
@@ -146,7 +198,7 @@ export async function appendSheetLead(env, lead) {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${tokenResult}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ values: [row] })
@@ -160,20 +212,20 @@ export async function appendSheetLead(env, lead) {
 }
 
 export async function updateSheetLeadStatus(env, leadId, newStatus) {
-  const sheetId = env.GOOGLE_SHEET_ID;
-  const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
+  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
   const key = env.GOOGLE_PRIVATE_KEY;
 
   if (!sheetId || !email || !key) return false;
 
   try {
-    const token = await getGoogleAccessToken(email, key);
-    if (!token) return false;
+    const tokenResult = await getGoogleAccessToken(email, key);
+    if (!tokenResult || typeof tokenResult !== 'string') return false;
 
-    // Get all rows to find matching leadId row number
+    // Find row
     const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:P`;
     const getRes = await fetch(getUrl, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${tokenResult}` }
     });
     if (!getRes.ok) return false;
 
@@ -183,19 +235,18 @@ export async function updateSheetLeadStatus(env, leadId, newStatus) {
 
     for (let i = 0; i < rows.length; i++) {
       if (rows[i][0] === leadId) {
-        targetRowIndex = i + 1; // 1-indexed for Sheets
+        targetRowIndex = i + 1;
         break;
       }
     }
 
     if (targetRowIndex === -1) return false;
 
-    // Update status in column P
     const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/P${targetRowIndex}?valueInputOption=USER_ENTERED`;
     const updateRes = await fetch(updateUrl, {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${tokenResult}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ values: [[newStatus]] })
