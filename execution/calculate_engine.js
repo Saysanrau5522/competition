@@ -587,6 +587,75 @@ function generateSalesCheatSheet(data = {}, scores = {}, roi = {}, products = []
   };
 }
 
+/**
+ * Generates AI-enriched closing script with deterministic SOP fallback
+ */
+async function generateAiSalesCheatSheet(data = {}, scores = {}, roi = {}, products = [], apiKey = '') {
+  const baseSheet = generateSalesCheatSheet(data, scores, roi, products);
+  if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim()) {
+    return baseSheet;
+  }
+
+  const companyName = data.companyName || 'the prospect';
+  const ownerName = data.contactName || 'there';
+  const hours = roi.weeklyWastedHours || 12;
+  const cashSaved = roi.formatted ? roi.formatted.annualAdminCashSaved : 'RM 10,000+';
+  const topProduct = products[0] || { name: 'Exabytes Cloud Solution', priceMYR: 'RM 29.90/mo' };
+
+  const prompt = `You are a Senior Solutions Consultant at Exabytes Malaysia closing a cloud transformation engagement with an SME.
+Profile:
+- Company: ${companyName}
+- Contact: ${ownerName}
+- Industry: ${data.industry || 'Malaysian SME'}
+- Team Size: ${data.teamSize || '8'}
+- Maturity Score: ${scores.totalScore || 45}/100 (${scores.tier || 'Digital Practitioner'})
+- Primary Bottleneck: ${data.bottleneck || 'manual operational bottlenecks'}
+- Weekly Labor Wasted: ${hours} hours/week
+- Annual Cash Saved: ${cashSaved}
+- Recommended Exabytes Solution: ${topProduct.name} (${topProduct.priceMYR || 'custom quote'})
+
+Write a punchy, consultative 3-part closing script. Return ONLY a JSON object with this exact schema:
+{
+  "bullet1_Hook": "Acknowledge context: empathetic hook referencing their exact bottleneck and ${hours} wasted hours",
+  "bullet2_Prescription": "Phase 1 Quick Win: clear prescription of why deploying ${topProduct.name} solves this first in under 7 days",
+  "bullet3_FinancialMath": "Deterministic financial math: closing with hard numbers showing ${cashSaved} annual recovery vs minimal Exabytes investment"
+}`;
+
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json' }
+        })
+      });
+
+      if (response.ok) {
+        const resData = await response.json();
+        const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          const parsed = JSON.parse(rawText);
+          if (parsed.bullet1_Hook && parsed.bullet2_Prescription && parsed.bullet3_FinancialMath) {
+            baseSheet.closingCheatSheet.bullet1_Hook = parsed.bullet1_Hook;
+            baseSheet.closingCheatSheet.bullet2_Prescription = parsed.bullet2_Prescription;
+            baseSheet.closingCheatSheet.bullet3_FinancialMath = parsed.bullet3_FinancialMath;
+            baseSheet.aiEnhanced = true;
+            return baseSheet;
+          }
+        }
+      }
+    } catch (err) {
+      // Try next model
+    }
+  }
+
+  return baseSheet;
+}
+
 module.exports = {
   MALAYSIAN_BENCHMARKS,
   calculateMaturityScores,
@@ -595,5 +664,6 @@ module.exports = {
   generateRoadmap,
   getDynamicFollowUpQuestion,
   generateAiDynamicQuestion,
-  generateSalesCheatSheet
+  generateSalesCheatSheet,
+  generateAiSalesCheatSheet
 };

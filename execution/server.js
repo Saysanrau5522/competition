@@ -128,6 +128,34 @@ app.post('/api/diagnostic/evaluate', async (req, res) => {
     const roadmap = generateRoadmap(formData, scores);
     const salesSheet = await generateAiEnrichedScript(formData, scores, roi, products);
 
+    if (formData.companyName || formData.contactName || formData.contactEmail) {
+      const formattedScript = [
+        salesSheet?.closingCheatSheet?.bullet1_Hook ? `1) Hook: ${salesSheet.closingCheatSheet.bullet1_Hook}` : '',
+        salesSheet?.closingCheatSheet?.bullet2_Prescription ? `2) Prescription: ${salesSheet.closingCheatSheet.bullet2_Prescription}` : '',
+        salesSheet?.closingCheatSheet?.bullet3_FinancialMath ? `3) Math: ${salesSheet.closingCheatSheet.bullet3_FinancialMath}` : ''
+      ].filter(Boolean).join('\n\n');
+
+      const leadRecord = {
+        companyName: formData.companyName || 'Malaysian SME',
+        contactName: formData.contactName || 'Lead',
+        contactEmail: formData.contactEmail || '',
+        contactPhone: formData.contactPhone || '',
+        industry: formData.industry || 'general_sme',
+        teamSize: String(formData.teamSize || '8'),
+        maturityScore: scores.totalScore,
+        maturityTier: scores.tier,
+        aiGrade: scores.aiGrade,
+        topPainPoint: formData.bottleneck || formData.q_bottleneck || 'Manual processes',
+        recommendedPackage: (products && products[0]) ? products[0].name : 'Exabytes Cloud Solution',
+        annualRoiMYR: roi.formatted ? roi.formatted.totalAnnualBenefit : 'RM 15,000',
+        preferredSlot: 'Self-Service Blueprint',
+        status: 'New',
+        salesCheatSheet: salesSheet,
+        closingScript: formattedScript
+      };
+      recordConsultationLead(leadRecord).catch(() => {});
+    }
+
     res.json({
       success: true,
       data: {

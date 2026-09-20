@@ -991,10 +991,15 @@ async function handleConsultationBooking() {
     preferredSlot: slot,
     notes: notes,
     salesCheatSheet: cachedEvaluationData.salesSheet ? {
-      hook: cachedEvaluationData.salesSheet.closingCheatSheet.bullet1_Hook,
-      prescription: cachedEvaluationData.salesSheet.closingCheatSheet.bullet2_Prescription,
-      financialMath: cachedEvaluationData.salesSheet.closingCheatSheet.bullet3_FinancialMath
-    } : null
+      hook: cachedEvaluationData.salesSheet.closingCheatSheet?.bullet1_Hook || cachedEvaluationData.salesSheet.hook || '',
+      prescription: cachedEvaluationData.salesSheet.closingCheatSheet?.bullet2_Prescription || cachedEvaluationData.salesSheet.prescription || '',
+      financialMath: cachedEvaluationData.salesSheet.closingCheatSheet?.bullet3_FinancialMath || cachedEvaluationData.salesSheet.financialMath || ''
+    } : null,
+    closingScript: cachedEvaluationData.salesSheet ? [
+      (cachedEvaluationData.salesSheet.closingCheatSheet?.bullet1_Hook || cachedEvaluationData.salesSheet.hook) ? `1) Hook: ${cachedEvaluationData.salesSheet.closingCheatSheet?.bullet1_Hook || cachedEvaluationData.salesSheet.hook}` : '',
+      (cachedEvaluationData.salesSheet.closingCheatSheet?.bullet2_Prescription || cachedEvaluationData.salesSheet.prescription) ? `2) Prescription: ${cachedEvaluationData.salesSheet.closingCheatSheet?.bullet2_Prescription || cachedEvaluationData.salesSheet.prescription}` : '',
+      (cachedEvaluationData.salesSheet.closingCheatSheet?.bullet3_FinancialMath || cachedEvaluationData.salesSheet.financialMath) ? `3) Math: ${cachedEvaluationData.salesSheet.closingCheatSheet?.bullet3_FinancialMath || cachedEvaluationData.salesSheet.financialMath}` : ''
+    ].filter(Boolean).join('\n\n') : ''
   };
 
   try {

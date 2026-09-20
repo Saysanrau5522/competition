@@ -9,6 +9,7 @@ import {
   mapExabytesProducts,
   generateRoadmap,
   generateSalesCheatSheet,
+  generateAiSalesCheatSheet,
   generateAiDynamicQuestion
 } from './execution/calculate_engine.js';
 
@@ -187,7 +188,13 @@ export default {
           const roi = calculateFinancialROI(answers);
           const products = mapExabytesProducts(answers, scores);
           const roadmap = generateRoadmap(answers, scores);
-          const salesSheet = generateSalesCheatSheet(answers, scores, roi, products);
+          const salesSheet = await generateAiSalesCheatSheet(answers, scores, roi, products, cleanEnv.GEMINI_API_KEY);
+
+          const formattedClosingScript = [
+            salesSheet?.closingCheatSheet?.bullet1_Hook ? `1) Hook: ${salesSheet.closingCheatSheet.bullet1_Hook}` : '',
+            salesSheet?.closingCheatSheet?.bullet2_Prescription ? `2) Prescription: ${salesSheet.closingCheatSheet.bullet2_Prescription}` : '',
+            salesSheet?.closingCheatSheet?.bullet3_FinancialMath ? `3) Math: ${salesSheet.closingCheatSheet.bullet3_FinancialMath}` : ''
+          ].filter(Boolean).join('\n\n');
 
           // Automatically record this prospect as a diagnosed lead in the CRM and Google Sheet!
           if (answers.companyName || answers.contactName || answers.contactEmail) {
@@ -208,7 +215,9 @@ export default {
               recommendedPackage: (products && products[0]) ? products[0].name : 'Exabytes Cloud Solution',
               annualRoiMYR: roi.formatted ? roi.formatted.totalAnnualBenefit : 'RM 15,000',
               preferredSlot: 'Self-Service Blueprint',
-              status: 'New'
+              status: 'New',
+              salesCheatSheet: salesSheet,
+              closingScript: formattedClosingScript
             };
 
             LIVE_EDGE_LEADS.unshift(leadRecord);

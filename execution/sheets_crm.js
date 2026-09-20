@@ -175,6 +175,56 @@ async function ensureGoogleSheetHeaders(sheets, sheetId) {
   }
 }
 
+function extractHook(val) {
+  if (!val || typeof val !== 'string') return '';
+  const m = val.match(/(?:1\)\s*Hook:\s*|Hook:\s*)([\s\S]*?)(?=(?:2\)\s*Prescription:|Prescription:|$))/i);
+  return m ? m[1].trim() : val.trim();
+}
+
+function extractPrescription(val) {
+  if (!val || typeof val !== 'string') return '';
+  const m = val.match(/(?:2\)\s*Prescription:\s*|Prescription:\s*)([\s\S]*?)(?=(?:3\)\s*Math:|Math:|$))/i);
+  return m ? m[1].trim() : '';
+}
+
+function extractMath(val) {
+  if (!val || typeof val !== 'string') return '';
+  const m = val.match(/(?:3\)\s*Math:\s*|Math:\s*)([\s\S]*?)$/i);
+  return m ? m[1].trim() : '';
+}
+
+function formatClosingScript(lead) {
+  if (typeof lead.closingScript === 'string' && lead.closingScript.trim()) {
+    return lead.closingScript.trim();
+  }
+  if (typeof lead.scriptText === 'string' && lead.scriptText.trim()) {
+    return lead.scriptText.trim();
+  }
+
+  const sheet = lead.salesCheatSheet || lead.salesSheet;
+  if (sheet) {
+    const cs = sheet.closingCheatSheet || sheet;
+    const hook = cs.bullet1_Hook || cs.hook || '';
+    const prescription = cs.bullet2_Prescription || cs.prescription || '';
+    const math = cs.bullet3_FinancialMath || cs.financialMath || '';
+
+    const parts = [];
+    if (hook) parts.push(`1) Hook: ${hook}`);
+    if (prescription) parts.push(`2) Prescription: ${prescription}`);
+    if (math) parts.push(`3) Math: ${math}`);
+
+    if (parts.length > 0) {
+      return parts.join('\n\n');
+    }
+  }
+
+  if (lead.notes && lead.notes !== 'Self-Service Blueprint' && lead.notes !== 'N/A') {
+    return lead.notes;
+  }
+
+  return '';
+}
+
 /**
  * Appends a lead row to Google Sheet
  */
@@ -189,9 +239,7 @@ async function appendLeadToGoogleSheet(lead) {
   try {
     await ensureGoogleSheetHeaders(sheets, sheetId);
 
-    const scriptText = lead.salesCheatSheet ?
-      `1) Hook: ${lead.salesCheatSheet.hook}\n2) Prescription: ${lead.salesCheatSheet.prescription}\n3) Math: ${lead.salesCheatSheet.financialMath}` :
-      (lead.notes || 'N/A');
+    const scriptText = formatClosingScript(lead);
 
     const row = [
       lead.id || `EXA-${Date.now().toString().slice(-6)}`,
@@ -263,9 +311,10 @@ async function fetchAllLeads() {
           preferredSlot: r[14] || '',
           status: r[15] || 'New',
           salesCheatSheet: {
-            hook: r[16] || '',
-            prescription: '',
-            financialMath: ''
+            hook: extractHook(r[16]),
+            prescription: extractPrescription(r[16]),
+            financialMath: extractMath(r[16]),
+            fullScript: r[16] || ''
           },
           notes: r[17] || ''
         })).reverse(); // Most recent first
