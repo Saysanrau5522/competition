@@ -118,53 +118,97 @@ function goToStep(stepNumber) {
   document.getElementById('wizardSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function renderDynamicQuestion(q) {
+  if (!q || !q.title || !Array.isArray(q.options)) return;
+  document.getElementById('dynamicQuestionTitle').textContent = q.title;
+  document.getElementById('dynamicQuestionSubtitle').textContent = q.subtitle || 'Operational assessment';
+
+  const container = document.getElementById('dynamicOptionsContainer');
+  container.innerHTML = '';
+  dynamicAnswerSelected = null;
+
+  q.options.forEach((opt, idx) => {
+    const optCard = document.createElement('div');
+    optCard.className = 'dynamic-option-card';
+    optCard.dataset.value = opt.value;
+    optCard.innerHTML = `
+      <div class="dynamic-radio"></div>
+      <div class="dynamic-text-title">${opt.label}</div>
+    `;
+
+    optCard.addEventListener('click', () => {
+      document.querySelectorAll('.dynamic-option-card').forEach(c => c.classList.remove('selected'));
+      optCard.classList.add('selected');
+      dynamicAnswerSelected = opt.value;
+    });
+
+    // Select first by default
+    if (idx === 0) {
+      optCard.classList.add('selected');
+      dynamicAnswerSelected = opt.value;
+    }
+
+    container.appendChild(optCard);
+  });
+}
+
 /**
- * Fetches targeted dynamic follow-up question from API
+ * Fetches targeted dynamic follow-up question from API with bulletproof fallback
  */
 async function loadDynamicFollowUp() {
   const industry = document.getElementById('industrySector').value || 'general_sme';
   const bottleneck = document.getElementById('primaryBottleneck').value || 'manual_inquiries';
 
+  const fallbackQuestions = {
+    manufacturing_logistics: {
+      title: 'If your primary server or computer suffered a ransomware attack today, how would you recover?',
+      subtitle: 'Over 68% of Malaysian SMEs lose critical records permanently without automated cloud backup.',
+      options: [
+        { label: 'No backup exists; recovery would be catastrophic', value: 'no_backup' },
+        { label: 'Manual weekly backup to an external USB drive kept on-site', value: 'usb_manual' },
+        { label: 'Personal Google Drive/Dropbox folder managed manually', value: 'cloud_folder' },
+        { label: 'Automated daily cloud snapshot with immutable ransomware defense', value: 'acronis_active' }
+      ]
+    },
+    retail_ecommerce: {
+      title: 'How are customer orders and inventory currently tracked across your channels?',
+      subtitle: 'Stockouts and delayed message replies cost Malaysian retailers an estimated 25% of potential revenue.',
+      options: [
+        { label: 'Manually typed into WhatsApp / notebooks by staff', value: 'manual_whatsapp' },
+        { label: 'Basic Excel spreadsheet updated at the end of the day', value: 'excel_delayed' },
+        { label: 'POS system in-store, but separated from online chats', value: 'fragmented_pos' },
+        { label: 'Cloud-synced inventory with instant FPX automated payment links', value: 'cloud_integrated' }
+      ]
+    },
+    default: {
+      title: 'Approximately how many customer inquiries or quote requests does your team handle each week?',
+      subtitle: 'This allows our calculation engine to project your exact administrative recovery in Ringgit Malaysia.',
+      options: [
+        { label: '10 to 30 inquiries / week (mostly manual follow-ups)', value: 'inquiries_low' },
+        { label: '30 to 80 inquiries / week (high manual workload)', value: 'inquiries_med' },
+        { label: '80+ inquiries / week (team struggles to respond on time)', value: 'inquiries_high' },
+        { label: 'Seeking modern automated inbound growth systems', value: 'seeking_leads' }
+      ]
+    }
+  };
+
+  const selectedFallback = fallbackQuestions[industry] || fallbackQuestions.default;
+
   try {
     const res = await fetch(`/api/diagnostic/follow-up?industry=${encodeURIComponent(industry)}&bottleneck=${encodeURIComponent(bottleneck)}`);
-    const json = await res.json();
-
-    if (json.success && json.question) {
-      const q = json.question;
-      document.getElementById('dynamicQuestionTitle').textContent = q.title;
-      document.getElementById('dynamicQuestionSubtitle').textContent = q.subtitle;
-
-      const container = document.getElementById('dynamicOptionsContainer');
-      container.innerHTML = '';
-      dynamicAnswerSelected = null;
-
-      q.options.forEach((opt, idx) => {
-        const optCard = document.createElement('div');
-        optCard.className = 'dynamic-option-card';
-        optCard.dataset.value = opt.value;
-        optCard.innerHTML = `
-          <div class="dynamic-radio"></div>
-          <div class="dynamic-text-title">${opt.label}</div>
-        `;
-
-        optCard.addEventListener('click', () => {
-          document.querySelectorAll('.dynamic-option-card').forEach(c => c.classList.remove('selected'));
-          optCard.classList.add('selected');
-          dynamicAnswerSelected = opt.value;
-        });
-
-        // Select first by default
-        if (idx === 0) {
-          optCard.classList.add('selected');
-          dynamicAnswerSelected = opt.value;
-        }
-
-        container.appendChild(optCard);
-      });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.question) {
+        renderDynamicQuestion(json.question);
+        return;
+      }
     }
   } catch (err) {
-    console.error('Error fetching dynamic follow up:', err);
+    console.warn('Error fetching dynamic follow up from API, using instant contextual fallback:', err);
   }
+
+  // Graceful fallback to guarantee the user is NEVER blocked
+  renderDynamicQuestion(selectedFallback);
 }
 
 /**

@@ -147,6 +147,24 @@ export default {
           });
         }
 
+        // GET & POST /api/diagnostic/follow-up (Dynamic Contextual Question)
+        if (pathname === '/api/diagnostic/follow-up') {
+          let params = {};
+          if (request.method === 'POST') {
+            try { params = await request.json(); } catch {}
+          } else {
+            params = {
+              industry: url.searchParams.get('industry') || '',
+              bottleneck: url.searchParams.get('bottleneck') || '',
+              companyName: url.searchParams.get('companyName') || '',
+              teamSize: url.searchParams.get('teamSize') || ''
+            };
+          }
+
+          const question = await generateAiDynamicQuestion(params, cleanEnv.GEMINI_API_KEY);
+          return jsonResponse({ success: true, question });
+        }
+
         // POST /api/diagnostic/evaluate
         if (pathname === '/api/diagnostic/evaluate' && request.method === 'POST') {
           const answers = await request.json();

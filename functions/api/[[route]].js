@@ -147,6 +147,25 @@ export async function onRequest(context) {
       });
     }
 
+    // 0.5 GET & POST /api/diagnostic/follow-up (Dynamic Contextual Question)
+    if (fullPath === 'diagnostic/follow-up') {
+      const url = new URL(request.url);
+      let params = {};
+      if (request.method === 'POST') {
+        try { params = await request.json(); } catch {}
+      } else {
+        params = {
+          industry: url.searchParams.get('industry') || '',
+          bottleneck: url.searchParams.get('bottleneck') || '',
+          companyName: url.searchParams.get('companyName') || '',
+          teamSize: url.searchParams.get('teamSize') || ''
+        };
+      }
+
+      const question = await generateAiDynamicQuestion(params, cleanEnv.GEMINI_API_KEY);
+      return jsonResponse({ success: true, question });
+    }
+
     // 1. POST /api/diagnostic/evaluate
     if (fullPath === 'diagnostic/evaluate' && request.method === 'POST') {
       const answers = await request.json();
