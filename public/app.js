@@ -610,42 +610,86 @@ async function generateClientSidePdf(data) {
     const html = await response.text();
     const safeName = (data.companyName || 'SME').replace(/[^a-zA-Z0-9]/g, '_');
 
-    if (window.html2pdf) {
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '800px';
-      container.innerHTML = html;
-      document.body.appendChild(container);
+    // Parse HTML to extract style rules and pages
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const styleContent = Array.from(doc.querySelectorAll('style')).map(s => s.innerHTML).join('\n');
+    const pages = Array.from(doc.querySelectorAll('.page'));
 
+    if (pages.length === 0) {
+      openPrintReadyReport(data);
+      return;
+    }
+
+    // Build visible-to-renderer container mounted at (0,0) behind page z-index
+    let wrapper = document.getElementById('blueprintPdfWrapper');
+    if (wrapper) wrapper.remove();
+    wrapper = document.createElement('div');
+    wrapper.id = 'blueprintPdfWrapper';
+    wrapper.style.cssText = 'position: absolute; top: 0; left: 0; width: 794px; z-index: -99999; background: #ffffff; pointer-events: none; opacity: 0.99;';
+
+    // A4 dimensions at 96 DPI: 794px width x 1123px height
+    wrapper.innerHTML = `
+      <style>
+        ${styleContent}
+        #blueprintPdfWrapper {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          color: #1e293b !important;
+          background: #ffffff !important;
+        }
+        #blueprintPdfWrapper .page {
+          width: 794px !important;
+          min-height: 1123px !important;
+          max-height: 1123px !important;
+          box-sizing: border-box !important;
+          margin: 0 !important;
+          padding: 70px 60px !important;
+          background: #ffffff !important;
+          position: relative !important;
+          overflow: hidden !important;
+          page-break-after: always !important;
+          break-after: page !important;
+        }
+        #blueprintPdfWrapper .screen-bar {
+          display: none !important;
+        }
+      </style>
+      ${pages.map(p => p.outerHTML).join('\n')}
+    `;
+
+    document.body.appendChild(wrapper);
+
+    // Wait 350ms for styles and vector SVG layout computation
+    await new Promise(resolve => setTimeout(resolve, 350));
+
+    if (window.html2pdf) {
       const opt = {
-        margin: [8, 8, 8, 8],
+        margin: 0,
         filename: `Exabytes_Blueprint_${safeName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          letterRendering: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 794
+        },
+        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] },
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
-      await window.html2pdf().set(opt).from(container).save();
-      container.remove();
-      showToast('Executive PDF Blueprint downloaded successfully!');
+      await window.html2pdf().set(opt).from(wrapper).save();
+      wrapper.remove();
+      showToast('Executive 4-Page PDF downloaded successfully!');
     } else {
-      // Fallback: download the self-contained HTML report
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `Exabytes_Blueprint_${safeName}.html`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-      showToast('Blueprint file downloaded successfully!');
+      wrapper.remove();
+      openPrintReadyReport(data);
     }
   } catch (err) {
     console.error('Client PDF compilation error:', err);
-    showToast('Failed to compile PDF. Opening print-ready preview instead...');
+    showToast('Direct download error. Opening print preview...');
     openPrintReadyReport(data);
   }
 }

@@ -63,8 +63,47 @@ function buildReportHtml(reportData) {
       padding: 24mm 22mm;
       position: relative;
       page-break-after: always;
+      break-after: page;
       overflow: hidden;
       background: #ffffff;
+    }
+
+    @media print {
+      .screen-bar { display: none !important; }
+      body { background: #ffffff !important; }
+      .page { box-shadow: none !important; margin: 0 !important; width: 100% !important; height: 100% !important; }
+    }
+
+    @media screen {
+      body { background: #0f172a; padding-bottom: 50px; }
+      .page { margin: 25px auto; box-shadow: 0 15px 35px rgba(0,0,0,0.3); border-radius: 4px; }
+      .screen-bar {
+        position: sticky;
+        top: 0;
+        z-index: 99999;
+        background: #1e293b;
+        color: #ffffff;
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .btn-bar-print {
+        background: linear-gradient(135deg, #00d2ff, #0088cc);
+        color: #0b1528;
+        font-weight: 700;
+        border: none;
+        padding: 9px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: transform 0.2s;
+      }
+      .btn-bar-print:hover {
+        transform: scale(1.03);
+      }
     }
 
     /* Page Header & Footer */
@@ -471,6 +510,16 @@ function buildReportHtml(reportData) {
   </style>
 </head>
 <body>
+
+  <!-- Sticky Top Screen Bar with Instant Print / Save as PDF Button -->
+  <div class="screen-bar">
+    <div style="font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: #ffffff;">
+      🏢 Exabytes Transformation Blueprint — <strong>${companyName}</strong>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-bar-print" onclick="window.print()">🖨️ Print / Save as PDF (Ctrl + P)</button>
+    </div>
+  </div>
 
   <!-- PAGE 1: COVER -->
   <div class="page cover-page">
