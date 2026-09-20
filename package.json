@@ -1,0 +1,22 @@
+{
+  "name": "exabytes-advisor-engine",
+  "version": "1.0.0",
+  "description": "AI SME Digital Growth Advisor & Inbound Lead Generation Engine for Exabytes Malaysia",
+  "main": "execution/server.js",
+  "scripts": {
+    "start": "node execution/server.js",
+    "dev": "node execution/server.js",
+    "test:calc": "node execution/calculate_engine.js --test",
+    "verify-env": "node execution/verify_credentials.js"
+  },
+  "keywords": ["sme", "digital-transformation", "ai", "advisor", "lead-gen", "exabytes"],
+  "author": "Exabytes Hackathon Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0",
+    "puppeteer": "^24.4.0"
+  }
+}

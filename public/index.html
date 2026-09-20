@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI SME Digital Growth Advisor by Exabytes Malaysia. Evaluate your digital maturity in under 5 minutes and get a personalized 12-month transformation roadmap with deterministic financial ROI.">
+  <title>Exabytes AI SME Digital Growth Advisor | Malaysia</title>
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for Radar Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Decorative Mesh/Gradients -->
+  <div class="bg-mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="site-header">
+    <div class="header-inner container">
+      <a href="#" class="brand-logo" id="headerLogo">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">EXABYTES</span>
+          <span class="brand-sub">Digital Growth Advisor</span>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <span class="badge-malaysia">
+          <span class="flag-icon">🇲🇾</span> Malaysian SME Edition
+        </span>
+        <a href="/internal/dashboard.html" class="btn-internal-link" id="internalPortalLink" target="_blank" title="Open Exabytes Internal Sales CRM">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <polyline points="17 11 19 13 23 9"></polyline>
+          </svg>
+          Exabytes Consultant CRM
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-container container">
+
+    <!-- HERO SECTION (Shown before or above wizard) -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span> Powered by Deterministic Malaysian Economic Benchmarks & AI
+      </div>
+      <h1 class="hero-title">
+        Discover Your SME's True Digital Maturity & <span class="gradient-text">Unlock Measurable ROI</span>
+      </h1>
+      <p class="hero-subtitle">
+        Over 95% of Malaysian SMEs waste capital adopting technology out of sequence. In under 5 minutes, our intelligent advisor calculates your Digital Maturity Index, projects cash recovered from wasted hours, and crafts an official 12-month transformation roadmap.
+      </p>
+
+      <div class="hero-stats-row">
+        <div class="stat-pill">
+          <strong>5 Minutes</strong> Diagnostic Audit
+        </div>
+        <div class="stat-pill">
+          <strong>RM 25/hr</strong> Admin Benchmark
+        </div>
+        <div class="stat-pill">
+          <strong>100%</strong> Deterministic Math
+        </div>
+        <div class="stat-pill">
+          <strong>Official PDF</strong> Executive Blueprint
+        </div>
+      </div>
+    </section>
+
+    <!-- DIAGNOSTIC WIZARD SECTION -->
+    <section class="wizard-section" id="wizardSection">
+      <div class="wizard-card glass-panel">
+        
+        <!-- Progress Bar Header -->
+        <div class="wizard-progress-wrap">
+          <div class="progress-info">
+            <span class="step-counter" id="stepCounter">Step 1 of 5</span>
+            <span class="step-title-preview" id="stepTitlePreview">Company Profile</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar-fill" id="progressBarFill" style="width: 20%;"></div>
+          </div>
+        </div>
+
+        <form id="diagnosticForm" onsubmit="return false;">
+
+          <!-- STEP 1: Company Profile -->
+          <div class="wizard-step active" id="step1" data-step="1">
+            <div class="step-header">
+              <span class="step-num-bubble">01</span>
+              <div>
+                <h2 class="step-title">Tell Us About Your Malaysian Enterprise</h2>
+                <p class="step-desc">This establishes your baseline industry peer group and labor benchmarks.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label for="companyName" class="form-label">Registered Business / Company Name <span class="req">*</span></label>
+                <input type="text" id="companyName" class="form-input" placeholder="e.g. Nusantara Retail Solutions Sdn Bhd" required>
+              </div>
+
+              <div class="form-group">
+                <label for="industrySector" class="form-label">Industry Sector <span class="req">*</span></label>
+                <select id="industrySector" class="form-select" required>
+                  <option value="" disabled selected>Select primary sector...</option>
+                  <option value="retail_ecommerce">Retail / E-Commerce / Consumer Goods</option>
+                  <option value="professional_services">Professional Services (Legal, Accounting, Consulting)</option>
+                  <option value="manufacturing_logistics">Manufacturing / Warehousing / Logistics</option>
+                  <option value="fnb_hospitality">Food & Beverage / Hospitality / Tourism</option>
+                  <option value="healthcare_wellness">Healthcare / Clinics / Wellness</option>
+                  <option value="construction_engineering">Construction / Property / Engineering</option>
+                  <option value="education_training">Education / Corporate Training</option>
+                  <option value="general_sme">Other Commercial SME</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="teamSize" class="form-label">Full-Time Employee Count <span class="req">*</span></label>
+                <select id="teamSize" class="form-select" required>
+                  <option value="3">Micro (1 - 4 Employees)</option>
+                  <option value="8" selected>Small (5 - 19 Employees)</option>
+                  <option value="25">Medium (20 - 50 Employees)</option>
+                  <option value="75">Mid-Market (50+ Employees)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="step-nav-footer">
+              <div></div>
+              <button type="button" class="btn btn-primary btn-next" id="btnStep1Next">
+                Continue to Digital Assets 
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Current Digital Tools -->
+          <div class="wizard-step" id="step2" data-step="2">
+            <div class="step-header">
+              <span class="step-num-bubble">02</span>
+              <div>
+                <h2 class="step-title">Current Software & Digital Assets in Use</h2>
+                <p class="step-desc">Select all applications and systems currently operating within your business.</p>
+              </div>
+            </div>
+
+            <div class="checkbox-grid">
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="business_email">
+                <div class="check-card-body">
+                  <div class="check-icon">📧</div>
+                  <div class="check-title">Branded Business Email</div>
+                  <div class="check-sub">e.g. name@company.com.my (not @gmail)</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="custom_domain">
+                <div class="check-card-body">
+                  <div class="check-icon">🌐</div>
+                  <div class="check-title">Official Website / E-Store</div>
+                  <div class="check-sub">Custom domain with SSL certificate</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="automated_cloud_backup">
+                <div class="check-card-body">
+                  <div class="check-icon">🛡️</div>
+                  <div class="check-title">Automated Cloud Backup</div>
+                  <div class="check-sub">Acronis, cloud snapshot, PDPA safe</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="cloud_crm">
+                <div class="check-card-body">
+                  <div class="check-icon">👥</div>
+                  <div class="check-title">Cloud CRM / Lead Tracker</div>
+                  <div class="check-sub">HubSpot, Zoho, Salesforce (not notebooks)</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="cloud_storage">
+                <div class="check-card-body">
+                  <div class="check-icon">☁️</div>
+                  <div class="check-title">Shared Cloud Storage</div>
+                  <div class="check-sub">Google Workspace, OneDrive, Dropbox</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="whatsapp_only" checked>
+                <div class="check-card-body">
+                  <div class="check-icon">💬</div>
+                  <div class="check-title">WhatsApp / WeChat for Sales</div>
+                  <div class="check-sub">Manual messaging with customers</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="excel_sheets" checked>
+                <div class="check-card-body">
+                  <div class="check-icon">📊</div>
+                  <div class="check-title">Excel / Google Sheets Logging</div>
+                  <div class="check-sub">Manual tracking of orders & client lists</div>
+                </div>
+              </label>
+
+              <label class="check-card">
+                <input type="checkbox" name="tools" value="chatgpt_ad_hoc">
+                <div class="check-card-body">
+                  <div class="check-icon">🤖</div>
+                  <div class="check-title">Ad-hoc AI / ChatGPT Usage</div>
+                  <div class="check-sub">Occasional copywriting or brainstorming</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="step-nav-footer">
+              <button type="button" class="btn btn-secondary btn-prev" id="btnStep2Prev">Back</button>
+              <button type="button" class="btn btn-primary btn-next" id="btnStep2Next">
+                Continue to Bottlenecks 
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Operational Bottlenecks & Wasted Hours -->
+          <div class="wizard-step" id="step3" data-step="3">
+            <div class="step-header">
+              <span class="step-num-bubble">03</span>
+              <div>
+                <h2 class="step-title">Identify Your Primary Operational Bottleneck</h2>
+                <p class="step-desc">Quantifying manual overhead allows our engine to compute exact Ringgit Malaysia ROI.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label for="primaryBottleneck" class="form-label">Biggest Operational Pain Point <span class="req">*</span></label>
+                <select id="primaryBottleneck" class="form-select" required>
+                  <option value="manual_inquiries" selected>Manual WhatsApp/phone inquiries taking too much staff time</option>
+                  <option value="data_loss">Fear of ransomware, hard drive failure, or losing customer records</option>
+                  <option value="missed_leads">Slow quotation turnaround leading to lost sales to competitors</option>
+                  <option value="online_presence">Lack of professional digital presence / outdated website</option>
+                  <option value="unintegrated_tools">Disorganized spreadsheets and disjointed communication</option>
+                </select>
+              </div>
+
+              <div class="form-group full-width">
+                <label for="hoursWasted" class="form-label">
+                  Estimated Hours Wasted Weekly on Repetitive Admin / Manual Follow-ups: 
+                  <span class="highlight-val" id="hoursWastedDisplay">12 hours / week</span>
+                </label>
+                <input type="range" id="hoursWasted" class="form-range" min="3" max="40" value="12" step="1">
+                <div class="range-markers">
+                  <span>3 hrs (Minor)</span>
+                  <span>12 hrs (Avg SME)</span>
+                  <span>25 hrs (Severe)</span>
+                  <span>40 hrs (Full-Time)</span>
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <label for="monthlyInquiries" class="form-label">
+                  Approximate Monthly Customer Inquiries or Orders Received:
+                </label>
+                <select id="monthlyInquiries" class="form-select">
+                  <option value="15">Fewer than 20 inquiries / month</option>
+                  <option value="40" selected>20 - 60 inquiries / month</option>
+                  <option value="120">60 - 200 inquiries / month</option>
+                  <option value="350">200+ inquiries / month</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="step-nav-footer">
+              <button type="button" class="btn btn-secondary btn-prev" id="btnStep3Prev">Back</button>
+              <button type="button" class="btn btn-primary btn-next" id="btnStep3Next">
+                Load Dynamic AI Follow-up 
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 4: Dynamic AI Follow-Up Question -->
+          <div class="wizard-step" id="step4" data-step="4">
+            <div class="step-header">
+              <span class="step-num-bubble">04</span>
+              <div>
+                <div class="ai-badge-header">
+                  <span class="ai-sparkle">✨</span> Context-Aware Follow-up Triggered
+                </div>
+                <h2 class="step-title" id="dynamicQuestionTitle">Analyzing your operational specifics...</h2>
+                <p class="step-desc" id="dynamicQuestionSubtitle">Our AI advisor is tailoring questions to your industry sector.</p>
+              </div>
+            </div>
+
+            <!-- Container for dynamically injected options -->
+            <div class="dynamic-options-container" id="dynamicOptionsContainer">
+              <!-- Radio option cards injected by JavaScript -->
+            </div>
+
+            <div class="step-nav-footer">
+              <button type="button" class="btn btn-secondary btn-prev" id="btnStep4Prev">Back</button>
+              <button type="button" class="btn btn-primary btn-next" id="btnStep4Next">
+                Final Step: Executive Details 
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 5: Executive Delivery & Growth Goals -->
+          <div class="wizard-step" id="step5" data-step="5">
+            <div class="step-header">
+              <span class="step-num-bubble">05</span>
+              <div>
+                <h2 class="step-title">Where Should We Deliver Your Executive Blueprint?</h2>
+                <p class="step-desc">Provide your authorized contact details to unlock your personalized calculations.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="contactName" class="form-label">Decision Maker's Full Name <span class="req">*</span></label>
+                <input type="text" id="contactName" class="form-input" placeholder="e.g. Dato' / Mr / Ms Lim" required>
+              </div>
+
+              <div class="form-group">
+                <label for="contactPhone" class="form-label">Malaysian Mobile / WhatsApp <span class="req">*</span></label>
+                <input type="tel" id="contactPhone" class="form-input" placeholder="e.g. +6012-3456789" required>
+              </div>
+
+              <div class="form-group full-width">
+                <label for="contactEmail" class="form-label">Official Work Email <span class="req">*</span></label>
+                <input type="email" id="contactEmail" class="form-input" placeholder="e.g. owner@yourcompany.com.my" required>
+              </div>
+
+              <div class="form-group full-width">
+                <label for="growthGoal" class="form-label">Primary 12-Month Growth Objective</label>
+                <select id="growthGoal" class="form-select">
+                  <option value="scale_revenue" selected>Increase revenue and win more local customers</option>
+                  <option value="cut_admin">Cut internal administrative overhead and speed up turnaround</option>
+                  <option value="protect_data">Ensure complete business data protection and PDPA compliance</option>
+                  <option value="expand_regional">Expand from Peninsular to East Malaysia / ASEAN markets</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="privacy-note">
+              🔒 <strong>Confidentiality Guaranteed:</strong> Your operational data is benchmarked in compliance with the Malaysian Personal Data Protection Act (PDPA).
+            </div>
+
+            <div class="step-nav-footer">
+              <button type="button" class="btn btn-secondary btn-prev" id="btnStep5Prev">Back</button>
+              <button type="button" class="btn btn-primary btn-generate" id="btnSubmitAudit">
+                <span class="btn-text">Generate My Digital Transformation Blueprint</span>
+                <div class="spinner d-none" id="submitSpinner"></div>
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+    <!-- RESULTS DASHBOARD (Revealed after evaluation) -->
+    <section class="results-section d-none" id="resultsSection">
+      
+      <!-- Executive Summary Header Banner -->
+      <div class="results-header-banner glass-panel">
+        <div class="results-top-meta">
+          <div class="client-badge" id="resClientBadge">Prepared for: Nusantara Retail Solutions</div>
+          <div class="date-badge" id="resDateBadge">Assessment Date: September 2026</div>
+        </div>
+
+        <div class="results-hero-grid">
+          <!-- Left: Score Dial & Tier -->
+          <div class="score-card">
+            <div class="score-dial-wrap">
+              <div class="score-dial-inner">
+                <span class="score-dial-val" id="resTotalScore">42</span>
+                <span class="score-dial-max">/ 100</span>
+              </div>
+            </div>
+            <div class="score-classification">
+              <div class="tier-tag" id="resTierTag">Digital Practitioner</div>
+              <div class="ai-grade-tag" id="resAiGrade">AI Readiness: Grade B</div>
+            </div>
+          </div>
+
+          <!-- Right: Executive Diagnosis Text -->
+          <div class="diagnosis-card">
+            <h2 class="diagnosis-title">Executive Diagnostic Summary</h2>
+            <p class="diagnosis-p" id="resTierSummary">
+              Your business possesses foundational digital touchpoints, but high manual dependence on WhatsApp and spreadsheets creates hidden administrative drag.
+            </p>
+
+            <div class="key-metrics-bar">
+              <div class="metric-item">
+                <span class="metric-label">Weekly Time Drain</span>
+                <span class="metric-value text-amber" id="resWeeklyHours">12 hrs/wk</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">12-Mo Benefit</span>
+                <span class="metric-value text-green" id="resTotalBenefit">RM 21,840</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Payback Timeline</span>
+                <span class="metric-value text-cyan" id="resPaybackDays">24 Days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid: Radar Chart & Deterministic Financial ROI Breakdown -->
+      <div class="dashboard-grid">
+        
+        <!-- Radar Visualization Card -->
+        <div class="radar-card glass-panel">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Digital Maturity Radar Breakdown</h3>
+              <p class="panel-sub">Benchmarked across 6 core infrastructure dimensions</p>
+            </div>
+            <span class="badge-subtle">Chart.js Live</span>
+          </div>
+          
+          <div class="chart-container">
+            <canvas id="maturityRadarChart"></canvas>
+          </div>
+
+          <div class="radar-legend-chips">
+            <span class="chip">🌐 Web Presence</span>
+            <span class="chip">🛡️ Cloud Backup</span>
+            <span class="chip">👥 CRM Tracking</span>
+            <span class="chip">🚀 Marketing Automation</span>
+            <span class="chip">🔒 Cybersecurity</span>
+            <span class="chip">🤖 AI Readiness</span>
+          </div>
+        </div>
+
+        <!-- Deterministic Financial ROI Card -->
+        <div class="roi-card glass-panel">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Deterministic Financial ROI (MYR)</h3>
+              <p class="panel-sub">Backed by Malaysian economic salary benchmarks (RM 25/hr)</p>
+            </div>
+            <span class="badge-subtle badge-green">Zero Hallucination</span>
+          </div>
+
+          <div class="roi-stat-grid">
+            <div class="roi-stat-box">
+              <span class="roi-box-label">Annual Admin Hours Reclaimed</span>
+              <span class="roi-box-val" id="resAnnualHours">437 hrs</span>
+              <span class="roi-box-sub">70% efficiency factor on manual tasks</span>
+            </div>
+
+            <div class="roi-stat-box highlight-box">
+              <span class="roi-box-label">Direct Labor Cash Recovered</span>
+              <span class="roi-box-val text-green" id="resCashSaved">RM 10,920</span>
+              <span class="roi-box-sub">Based on RM 25.00/hr admin salary</span>
+            </div>
+
+            <div class="roi-stat-box">
+              <span class="roi-box-label">Revenue Leakage Salvaged</span>
+              <span class="roi-box-val text-cyan" id="resRevenueSaved">RM 10,500</span>
+              <span class="roi-box-sub">24/7 instant response lead capture</span>
+            </div>
+
+            <div class="roi-stat-box">
+              <span class="roi-box-label">Total 12-Month Net Value</span>
+              <span class="roi-box-val text-emerald" id="resNetValue">RM 21,420</span>
+              <span class="roi-box-sub">Combined direct & indirect returns</span>
+            </div>
+          </div>
+
+          <!-- Formula Callout Box -->
+          <div class="formula-box">
+            <div class="formula-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Malaysian Mathematical Formula
+            </div>
+            <p class="formula-code">
+              [Weekly Hours Wasted] × 70% Efficiency × 52 Weeks × RM 25/hr Admin Wage = Direct Cash Recovered
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 12-Month Staged Transformation Roadmap -->
+      <div class="roadmap-card glass-panel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">12-Month Phased Transformation Blueprint</h3>
+            <p class="panel-sub">Adopted in sequence to ensure staff usability and rapid positive cashflow</p>
+          </div>
+          <span class="badge-subtle">Staged Adoption</span>
+        </div>
+
+        <div class="phases-timeline" id="phasesTimelineContainer">
+          <!-- Dynamically populated 3 phases -->
+        </div>
+      </div>
+
+      <!-- Exabytes Recommended Solution Packages -->
+      <div class="solutions-card glass-panel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Recommended Exabytes Commercial Stack</h3>
+            <p class="panel-sub">Deterministic mapping to official Exabytes Malaysia enterprise packages</p>
+          </div>
+          <span class="badge-subtle">Zero Hallucination</span>
+        </div>
+
+        <div class="solutions-grid" id="solutionsGridContainer">
+          <!-- Dynamically populated product cards -->
+        </div>
+      </div>
+
+      <!-- Executive Action & Consultation Booking CTA -->
+      <div class="cta-banner glass-panel">
+        <div class="cta-content">
+          <h2 class="cta-title">Ready to Execute Your Digital Transformation?</h2>
+          <p class="cta-sub">
+            Download your comprehensive 4-page executive blueprint as a confidential PDF, or speak with an Exabytes Growth Consultant to review implementation financing.
+          </p>
+          <div class="cta-buttons-row">
+            <button type="button" class="btn btn-pdf" id="btnDownloadPdf">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="pdfBtnText">Download Executive Blueprint (PDF)</span>
+              <div class="spinner d-none" id="pdfSpinner"></div>
+            </button>
+
+            <button type="button" class="btn btn-preview-html" id="btnPreviewHtml">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Preview in Browser
+            </button>
+
+            <button type="button" class="btn btn-consult" id="btnOpenConsultModal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Request Free Exabytes Consultation
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- CONSULTATION MODAL (Breathable 2-Column Calendar Scheduler) -->
+  <div class="modal-overlay d-none" id="consultationModal">
+    <div class="modal-card glass-panel cal-booking-modal">
+      <button class="modal-close" id="btnCloseModal" aria-label="Close modal">&times;</button>
+      
+      <div class="modal-header" style="text-align: left; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 class="modal-title" style="font-size: 22px;">Schedule Your Complimentary Strategy Session</h3>
+            <p class="modal-subtitle" style="margin-top: 4px;">
+              Choose an available date and time slot to review your digital transformation blueprint with an Exabytes Growth Expert.
+            </p>
+          </div>
+          <div class="cal-tz-pill" style="flex-shrink: 0;">🇲🇾 GMT+8 Malaysia Time</div>
+        </div>
+      </div>
+
+      <form id="consultationForm" onsubmit="return false;">
+        <div class="cal-modal-split">
+          
+          <!-- LEFT COLUMN: PROPER MONTHLY CALENDAR -->
+          <div class="cal-modal-left">
+            <div class="cal-pane-label">
+              <span>1. Choose Date</span>
+              <span id="bookingMonthYearLabel" style="color: var(--accent-cyan); font-weight: 700;">September 2026</span>
+            </div>
+
+            <!-- Month Navigator -->
+            <div class="booking-month-nav">
+              <button type="button" class="mini-cal-arrow" id="btnBookingPrevMonth">&lt;</button>
+              <div class="booking-nav-title" id="bookingNavTitle">September 2026</div>
+              <button type="button" class="mini-cal-arrow" id="btnBookingNextMonth">&gt;</button>
+            </div>
+
+            <!-- Full Month Grid -->
+            <div class="booking-calendar-grid" id="bookingCalendarGrid">
+              <!-- Dynamically populated by app.js -->
+            </div>
+
+            <div class="cal-legend-row">
+              <span class="legend-item"><span class="legend-box has-bookings-bubble"></span> Has Bookings</span>
+              <span class="legend-item"><span class="legend-box active-bubble"></span> Selected</span>
+              <span class="legend-item"><span class="legend-box disabled-bubble"></span> Unavailable</span>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: TIME SLOTS & CONFIRMATION -->
+          <div class="cal-modal-right">
+            <div class="cal-pane-label">
+              <span>2. Available Consultation Times</span>
+              <span style="font-size: 11px; color: var(--text-dim);">45-Min Executive Review</span>
+            </div>
+
+            <!-- Active Date Title -->
+            <div class="selected-date-callout" id="selectedDateCallout">
+              <div class="callout-date-text" id="activeBookingDateTitle">Select a date from calendar</div>
+              <div class="callout-sub-text">Showing real-time availability for Exabytes Advisors</div>
+            </div>
+
+            <!-- Slots Grid -->
+            <div class="booking-time-slots" id="bookingTimeSlotsContainer">
+              <!-- Injected by app.js with Booked vs Available state -->
+            </div>
+
+            <!-- Special Notes -->
+            <div class="form-group" style="margin-top: 16px; margin-bottom: 20px;">
+              <label class="form-label" style="font-size: 12px;">Special Discussion Topics or Requirements (Optional)</label>
+              <textarea id="consultNotes" class="form-textarea" rows="2" placeholder="e.g. Inquiring about MDEC digital grants, Acronis cloud backup sizing, or payment gateway setup..."></textarea>
+            </div>
+
+            <input type="hidden" id="consultSlot" value="">
+
+            <div class="modal-actions" style="margin-top: 0;">
+              <button type="button" class="btn btn-secondary" id="btnCancelConsult">Cancel</button>
+              <button type="button" class="btn btn-primary btn-confirm-booking" id="btnConfirmConsult">
+                <span id="confirmConsultText">Confirm Consultation Booking</span>
+                <div class="spinner d-none" id="consultSpinner"></div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </form>
+
+      <div class="modal-success d-none" id="modalSuccessMsg">
+        <div class="success-icon">🎉</div>
+        <h4>Booking Confirmed & Lead Synced!</h4>
+        <p>
+          Your request has been routed to the Exabytes Malaysia Growth Team. Lead Ref: <strong id="leadRefNumber">EXA-92811</strong>.
+        </p>
+        <p class="sub-lead-note">
+          You can also view this prospect in real-time inside the 
+          <a href="/internal/dashboard.html" target="_blank" style="color:#00d2ff; text-decoration:underline;">Exabytes Internal Sales CRM</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <div><strong>Exabytes Network Sdn Bhd</strong> (Penang HQ & Cyberjaya DC)</div>
+        <div class="footer-copy">© 2026 Exabytes Malaysia. All rights reserved. PDPA Compliant.</div>
+      </div>
+      <div class="footer-right">
+        <a href="/internal/dashboard.html" target="_blank">Internal Sales Portal</a>
+        <a href="https://www.exabytes.my" target="_blank" rel="noopener">Official Exabytes Website</a>
+        <a href="mailto:sales@exabytes.my">Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
