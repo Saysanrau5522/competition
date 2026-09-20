@@ -104,29 +104,6 @@ export async function getGoogleAccessToken(clientEmail, privateKey) {
   }
 }
 
-export async function fetchSheetLeads(env) {
-  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
-  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
-  const key = env.GOOGLE_PRIVATE_KEY;
-
-  if (!sheetId || !email || !key) {
-    return [];
-  }
-
-  try {
-    const tokenResult = await getGoogleAccessToken(email, key);
-    if (!tokenResult || typeof tokenResult !== 'string') return [];
-
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A2:R`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${tokenResult}` }
-    });
-
-    if (!res.ok) {
-      console.warn('Google Sheets fetch failed:', await res.text());
-      return [];
-    }
-
 function extractHook(val) {
   if (!val || typeof val !== 'string') return '';
   const m = val.match(/(?:1\)\s*Hook:\s*|Hook:\s*)([\s\S]*?)(?=(?:2\)\s*Prescription:|Prescription:|$))/i);
@@ -176,6 +153,29 @@ function formatClosingScript(lead) {
 
   return '';
 }
+
+export async function fetchSheetLeads(env) {
+  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
+  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
+  const key = env.GOOGLE_PRIVATE_KEY;
+
+  if (!sheetId || !email || !key) {
+    return [];
+  }
+
+  try {
+    const tokenResult = await getGoogleAccessToken(email, key);
+    if (!tokenResult || typeof tokenResult !== 'string') return [];
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A2:R`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${tokenResult}` }
+    });
+
+    if (!res.ok) {
+      console.warn('Google Sheets fetch failed:', await res.text());
+      return [];
+    }
 
     const data = await res.json();
     const rows = data.values || [];
