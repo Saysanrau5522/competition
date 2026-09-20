@@ -322,10 +322,11 @@ async function handleAuditSubmission() {
     });
 
     const json = await res.json();
-    if (json.success && json.data) {
+    const evalData = json.data || (json.scores ? json : null);
+    if (evalData && (json.success !== false)) {
       cachedEvaluationData = {
         ...payload,
-        ...json.data
+        ...evalData
       };
 
       // Populate and reveal results

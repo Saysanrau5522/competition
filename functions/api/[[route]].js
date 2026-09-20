@@ -7,6 +7,7 @@ import {
   calculateMaturityScores,
   calculateFinancialROI,
   mapExabytesProducts,
+  generateRoadmap,
   generateSalesCheatSheet,
   generateAiDynamicQuestion
 } from '../../execution/calculate_engine.js';
@@ -170,43 +171,37 @@ export async function onRequest(context) {
     // 1. POST /api/diagnostic/evaluate
     if (fullPath === 'diagnostic/evaluate' && request.method === 'POST') {
       const answers = await request.json();
-      const companyData = {
-        companyName: answers.companyName,
-        contactName: answers.contactName,
-        contactEmail: answers.contactEmail,
-        contactPhone: answers.contactPhone,
-        industry: answers.industry,
-        teamSize: answers.teamSize,
-        bottleneck: answers.q_bottleneck,
-        goals: answers.q_goals
-      };
-
       const scores = calculateMaturityScores(answers);
-      const roi = calculateFinancialROI(answers, scores.totalScore, companyData);
-      const products = mapExabytesProducts(scores, roi, companyData);
-      const salesSheet = generateSalesCheatSheet(companyData, scores, roi, products);
-
-      // AI dynamic question using Gemini
-      const aiQuestion = await generateAiDynamicQuestion(companyData, cleanEnv.GEMINI_API_KEY);
+      const roi = calculateFinancialROI(answers);
+      const products = mapExabytesProducts(answers, scores);
+      const roadmap = generateRoadmap(answers, scores);
+      const salesSheet = generateSalesCheatSheet(answers, scores, roi, products);
 
       return jsonResponse({
-        companyName: companyData.companyName,
-        contactName: companyData.contactName,
-        contactEmail: companyData.contactEmail,
-        contactPhone: companyData.contactPhone,
-        industry: companyData.industry,
-        teamSize: companyData.teamSize,
-        bottleneck: answers.q_bottleneck,
+        success: true,
+        data: {
+          companyName: answers.companyName || '',
+          contactName: answers.contactName || '',
+          contactEmail: answers.contactEmail || '',
+          contactPhone: answers.contactPhone || '',
+          industry: answers.industry || '',
+          teamSize: answers.teamSize || '',
+          bottleneck: answers.bottleneck || answers.q_bottleneck || '',
+          hoursWasted: answers.hoursWasted || 12,
+          monthlyInquiries: answers.monthlyInquiries || 30,
+          growthGoal: answers.growthGoal || answers.q_goals || '',
+          scores,
+          roi,
+          products,
+          roadmap,
+          salesSheet
+        },
+        // Flat fallback properties for backwards compatibility
         scores,
         roi,
         products,
-        roadmap: [
-          { phase: 'Phase 1: Foundation (Days 1 - 30)', title: 'Cloud Infrastructure & Automated Operations', impact: 'Reclaim 6 - 8 hours/week' },
-          { phase: 'Phase 2: Acceleration (Days 31 - 60)', title: 'Cyber Resilience & Data Security', impact: 'Zero downtime & ransomware protection' },
-          { phase: 'Phase 3: Scale (Days 61 - 90)', title: 'AI Copilot & Lead Automation', impact: '+35% faster inbound response times' }
-        ],
-        salesSheet,
-        aiQuestion
+        roadmap,
+        salesSheet
       });
     }
 
