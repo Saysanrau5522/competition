@@ -130,7 +130,7 @@ export default {
                 leadsCount = leads.length;
               }
             } else {
-              googleAuthStatus = `FAILED: ${tokenRes?.error || 'Unknown error'}`;
+              googleAuthStatus = `FAILED: ${tokenRes.error || 'Check private key format'}`;
             }
           }
 
@@ -157,7 +157,8 @@ export default {
               industry: url.searchParams.get('industry') || '',
               bottleneck: url.searchParams.get('bottleneck') || '',
               companyName: url.searchParams.get('companyName') || '',
-              teamSize: url.searchParams.get('teamSize') || ''
+              teamSize: url.searchParams.get('teamSize') || '',
+              hoursWasted: url.searchParams.get('hoursWasted') || ''
             };
           }
 

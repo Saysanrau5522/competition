@@ -155,47 +155,110 @@ function renderDynamicQuestion(q) {
 /**
  * Fetches targeted dynamic follow-up question from API with bulletproof fallback
  */
+/**
+ * Fetches targeted dynamic follow-up question from API with bulletproof fallback
+ */
 async function loadDynamicFollowUp() {
-  const industry = document.getElementById('industrySector').value || 'general_sme';
-  const bottleneck = document.getElementById('primaryBottleneck').value || 'manual_inquiries';
+  const companyName = document.getElementById('companyName')?.value?.trim() || '';
+  const industry = document.getElementById('industrySector')?.value || 'general_sme';
+  const teamSize = document.getElementById('teamSize')?.value || '8';
+  const bottleneck = document.getElementById('primaryBottleneck')?.value || 'manual_inquiries';
+  const hoursWasted = document.getElementById('hoursWasted')?.value || '12';
 
   const fallbackQuestions = {
-    manufacturing_logistics: {
-      title: 'If your primary server or computer suffered a ransomware attack today, how would you recover?',
-      subtitle: 'Over 68% of Malaysian SMEs lose critical records permanently without automated cloud backup.',
-      options: [
-        { label: 'No backup exists; recovery would be catastrophic', value: 'no_backup' },
-        { label: 'Manual weekly backup to an external USB drive kept on-site', value: 'usb_manual' },
-        { label: 'Personal Google Drive/Dropbox folder managed manually', value: 'cloud_folder' },
-        { label: 'Automated daily cloud snapshot with immutable ransomware defense', value: 'acronis_active' }
-      ]
-    },
     retail_ecommerce: {
-      title: 'How are customer orders and inventory currently tracked across your channels?',
-      subtitle: 'Stockouts and delayed message replies cost Malaysian retailers an estimated 25% of potential revenue.',
+      title: 'How are customer orders and inventory currently tracked across your sales channels?',
+      subtitle: 'Stockouts and manual WhatsApp order entries cost Malaysian retailers an estimated 15+ hours each week.',
       options: [
-        { label: 'Manually typed into WhatsApp / notebooks by staff', value: 'manual_whatsapp' },
-        { label: 'Basic Excel spreadsheet updated at the end of the day', value: 'excel_delayed' },
-        { label: 'POS system in-store, but separated from online chats', value: 'fragmented_pos' },
-        { label: 'Cloud-synced inventory with instant FPX automated payment links', value: 'cloud_integrated' }
+        { label: 'Mostly manual paper receipts and individual WhatsApp chat confirmations', value: 'manual_whatsapp' },
+        { label: 'Excel spreadsheets updated manually at the end of each business day', value: 'excel_daily' },
+        { label: 'Standalone retail POS in-store that is not synchronized with our online store', value: 'offline_pos' },
+        { label: 'Cloud-synced inventory with instant automated FPX checkout links', value: 'cloud_integrated' }
       ]
     },
-    default: {
+    professional_services: {
+      title: 'How long does it typically take from initial client inquiry to sending an official proposal or quotation?',
+      subtitle: 'In B2B professional services, 50% of Malaysian buyers select the first vendor that delivers a structured quotation.',
+      options: [
+        { label: 'Over 24 to 48 hours (manual document drafting and partner pricing checks)', value: 'slow_quote' },
+        { label: 'Same day (around 4 - 8 hours using manual Word/Excel templates)', value: 'sameday_quote' },
+        { label: 'Within 1 - 2 hours using standardized semi-automated template workflows', value: 'fast_quote' },
+        { label: 'Instant automated proposal delivery with online acceptance and deposit tracking', value: 'automated_quote' }
+      ]
+    },
+    manufacturing_logistics: {
+      title: 'If your primary server or on-premise computer suffered a ransomware attack today, how would you recover?',
+      subtitle: 'Over 68% of Malaysian SMEs lose critical CAD/ERP records permanently without immutable cloud backup.',
+      options: [
+        { label: 'No verified backup exists; recovery would be catastrophic downtime', value: 'no_backup' },
+        { label: 'Manual weekly backup to an external USB hard drive kept on-site', value: 'usb_manual' },
+        { label: 'Personal Google Drive or Dropbox folder managed ad-hoc by staff', value: 'cloud_folder' },
+        { label: 'Automated daily cloud snapshots with active anti-ransomware protection', value: 'acronis_active' }
+      ]
+    },
+    fnb_hospitality: {
+      title: 'Do you systematically capture customer contact info for repeat visits, loyalty rewards, or promotions?',
+      subtitle: 'Sustained F&B profitability relies heavily on automated digital loyalty and direct customer remarketing.',
+      options: [
+        { label: 'No customer database captured; 100% dependent on walk-ins and word-of-mouth', value: 'no_crm' },
+        { label: 'Occasional manual name/phone lists in notebooks or business card fishbowls', value: 'paper_crm' },
+        { label: 'Third-party delivery platforms (Grab/Foodpanda) without direct customer data ownership', value: 'thirdparty_only' },
+        { label: 'Owned digital membership and automated WhatsApp VIP loyalty notifications', value: 'owned_loyalty' }
+      ]
+    },
+    healthcare_wellness: {
+      title: 'How do you handle patient appointment bookings and confidential medical records under PDPA?',
+      subtitle: 'Over 70% of Malaysian private practices still rely on unencrypted desktop folders vulnerable to hardware failure.',
+      options: [
+        { label: 'Manual phone/WhatsApp bookings and physical paper medical folders', value: 'paper_health' },
+        { label: 'Basic spreadsheets with unencrypted desktop folders lacking audit trails', value: 'desktop_health' },
+        { label: 'Standalone booking app, but patient consent forms are still kept physically', value: 'hybrid_health' },
+        { label: 'Fully digitized practice management system with encrypted cloud backups and SMS reminders', value: 'cloud_health' }
+      ]
+    },
+    construction_engineering: {
+      title: 'How does your project team coordinate site progress updates, variation orders, and subcontractor billings?',
+      subtitle: 'Disjointed communication between site supervisors and finance creates costly dispute delays.',
+      options: [
+        { label: 'Scattered personal WhatsApp group chats with paper site receipts and forms', value: 'whatsapp_site' },
+        { label: 'End-of-week spreadsheet consolidations leading to delayed claim submissions', value: 'excel_site' },
+        { label: 'Cloud shared folders for site photos, but billings are still processed manually', value: 'cloud_folders_site' },
+        { label: 'Centralized project cloud portal with real-time milestone tracking and digital sign-offs', value: 'integrated_site' }
+      ]
+    },
+    education_training: {
+      title: 'How does your organization capture student inquiries and manage course registrations?',
+      subtitle: 'Educational providers lose over 30% of student sign-ups when inquiries are not followed up within 15 minutes.',
+      options: [
+        { label: 'Manual responses to social media DMs and phone calls during working hours only', value: 'manual_dms' },
+        { label: 'Basic Google Forms requiring manual spreadsheet copy-pasting to issue payment details', value: 'forms_manual' },
+        { label: 'Website form with email notifications, but follow-up takes 1 to 2 business days', value: 'slow_email' },
+        { label: '24/7 automated WhatsApp inquiry bot with instant course brochure delivery and seat booking', value: 'automated_edu' }
+      ]
+    },
+    general_sme: {
       title: 'Approximately how many customer inquiries or quote requests does your team handle each week?',
       subtitle: 'This allows our calculation engine to project your exact administrative recovery in Ringgit Malaysia.',
       options: [
-        { label: '10 to 30 inquiries / week (mostly manual follow-ups)', value: 'inquiries_low' },
-        { label: '30 to 80 inquiries / week (high manual workload)', value: 'inquiries_med' },
-        { label: '80+ inquiries / week (team struggles to respond on time)', value: 'inquiries_high' },
-        { label: 'Seeking modern automated inbound growth systems', value: 'seeking_leads' }
+        { label: '10 to 30 inquiries / week (mostly manual WhatsApp/email follow-ups)', value: 'inquiries_low' },
+        { label: '30 to 80 inquiries / week (high manual workload consuming staff capacity)', value: 'inquiries_med' },
+        { label: '80+ inquiries / week (team regularly struggles to respond before customers go elsewhere)', value: 'inquiries_high' },
+        { label: 'Low inquiry volume currently; urgently seeking scalable digital inbound systems', value: 'seeking_leads' }
       ]
     }
   };
 
-  const selectedFallback = fallbackQuestions[industry] || fallbackQuestions.default;
+  const selectedFallback = fallbackQuestions[industry] || fallbackQuestions.general_sme;
 
   try {
-    const res = await fetch(`/api/diagnostic/follow-up?industry=${encodeURIComponent(industry)}&bottleneck=${encodeURIComponent(bottleneck)}`);
+    const queryParams = new URLSearchParams({
+      companyName,
+      industry,
+      teamSize,
+      bottleneck,
+      hoursWasted
+    });
+    const res = await fetch(`/api/diagnostic/follow-up?${queryParams.toString()}`);
     if (res.ok) {
       const json = await res.json();
       if (json.success && json.question) {

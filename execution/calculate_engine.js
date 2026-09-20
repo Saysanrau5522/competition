@@ -350,137 +350,188 @@ function generateRoadmap(data = {}, scores = {}) {
  * Rule-based fallback for dynamic follow-up question
  */
 function getDynamicFollowUpQuestion(params = {}) {
-  const industry = params.industry || 'general';
+  const industry = (params.industry || '').toLowerCase();
+  const bottleneck = (params.bottleneck || '').toLowerCase();
 
   if (industry.includes('retail') || industry.includes('ecommerce')) {
     return {
       questionId: 'retail_orders',
-      title: 'How are customer orders and inventory currently tracked across your channels?',
-      subtitle: 'Malaysian retailers often lose up to 15 hours/week synchronizing WhatsApp messages with physical stock.',
+      title: 'How are customer orders and inventory currently tracked across your sales channels?',
+      subtitle: 'Stockouts and manual WhatsApp order entries cost Malaysian retailers an estimated 15+ hours each week.',
       options: [
-        { label: 'Mostly manual paper receipts & WhatsApp text messages', value: 'manual_whatsapp', hoursImpact: 16 },
-        { label: 'Excel spreadsheets updated at the end of each day', value: 'excel_daily', hoursImpact: 10 },
-        { label: 'Standalone POS system not connected to our online store', value: 'offline_pos', hoursImpact: 7 },
-        { label: 'Integrated cloud e-commerce & inventory management', value: 'cloud_integrated', hoursImpact: 2 }
+        { label: 'Mostly manual paper receipts and individual WhatsApp chat confirmations', value: 'manual_whatsapp', hoursImpact: 16 },
+        { label: 'Excel spreadsheets updated manually at the end of each business day', value: 'excel_daily', hoursImpact: 10 },
+        { label: 'Standalone retail POS in-store that is not synchronized with our online store', value: 'offline_pos', hoursImpact: 7 },
+        { label: 'Cloud-synced inventory with instant automated FPX checkout links', value: 'cloud_integrated', hoursImpact: 2 }
       ]
     };
   }
 
-  if (industry.includes('services') || industry.includes('consulting')) {
+  if (industry.includes('health') || industry.includes('clinic') || industry.includes('wellness')) {
+    return {
+      questionId: 'healthcare_pdpa',
+      title: 'How do you handle patient appointment bookings and confidential medical records under PDPA?',
+      subtitle: 'Over 70% of Malaysian private practices still rely on unencrypted desktop folders vulnerable to hardware failure.',
+      options: [
+        { label: 'Manual phone/WhatsApp bookings and physical paper medical folders', value: 'paper_health', hoursImpact: 18 },
+        { label: 'Basic spreadsheets with unencrypted desktop folders lacking audit trails', value: 'desktop_health', hoursImpact: 11 },
+        { label: 'Standalone booking app, but patient consent forms are still kept physically', value: 'hybrid_health', hoursImpact: 6 },
+        { label: 'Fully digitized practice management system with encrypted cloud backups and SMS reminders', value: 'cloud_health', hoursImpact: 2 }
+      ]
+    };
+  }
+
+  if (industry.includes('services') || industry.includes('consulting') || industry.includes('legal') || industry.includes('accounting')) {
     return {
       questionId: 'services_followup',
-      title: 'How long does it typically take from client inquiry to sending an official quotation?',
-      subtitle: 'In B2B services, 50% of Malaysian buyers choose the first vendor that delivers a formal proposal.',
+      title: 'How long does it typically take from initial client inquiry to sending an official proposal or quotation?',
+      subtitle: 'In B2B professional services, 50% of Malaysian buyers select the first vendor that delivers a structured quotation.',
       options: [
-        { label: 'Over 24 to 48 hours (manual typing and pricing checks)', value: 'slow_quote', hoursImpact: 14 },
-        { label: 'Same day (around 4 - 8 hours via manual templates)', value: 'sameday_quote', hoursImpact: 8 },
-        { label: 'Within 1 - 2 hours using semi-automated templates', value: 'fast_quote', hoursImpact: 4 },
-        { label: 'Instant automated proposal delivery', value: 'automated_quote', hoursImpact: 1 }
+        { label: 'Over 24 to 48 hours (manual document drafting and partner pricing checks)', value: 'slow_quote', hoursImpact: 15 },
+        { label: 'Same day (around 4 - 8 hours using manual Word/Excel templates)', value: 'sameday_quote', hoursImpact: 9 },
+        { label: 'Within 1 - 2 hours using standardized semi-automated template workflows', value: 'fast_quote', hoursImpact: 4 },
+        { label: 'Instant automated proposal delivery with online acceptance and deposit tracking', value: 'automated_quote', hoursImpact: 1 }
       ]
     };
   }
 
-  if (industry.includes('fnb') || industry.includes('hospitality')) {
+  if (industry.includes('fnb') || industry.includes('hospitality') || industry.includes('food')) {
     return {
       questionId: 'fnb_crm',
-      title: 'Do you systematically capture customer contact info for repeat visits or promotions?',
-      subtitle: 'Sustained F&B profitability relies heavily on automated digital loyalty and direct remarketing.',
+      title: 'Do you systematically capture customer contact info for repeat visits, loyalty rewards, or promotions?',
+      subtitle: 'Sustained F&B profitability relies heavily on automated digital loyalty and direct customer remarketing.',
       options: [
-        { label: 'No customer database captured; walk-ins only', value: 'no_crm', hoursImpact: 12 },
-        { label: 'Occasional manual name/phone lists in notebooks', value: 'paper_crm', hoursImpact: 9 },
-        { label: 'Third-party delivery apps (Grab/Foodpanda) without direct data ownership', value: 'thirdparty_only', hoursImpact: 6 },
-        { label: 'Owned digital membership / automated WhatsApp loyalty club', value: 'owned_loyalty', hoursImpact: 2 }
+        { label: 'No customer database captured; 100% dependent on walk-ins and word-of-mouth', value: 'no_crm', hoursImpact: 14 },
+        { label: 'Occasional manual name/phone lists in notebooks or business card fishbowls', value: 'paper_crm', hoursImpact: 9 },
+        { label: 'Third-party delivery platforms (Grab/Foodpanda) without direct customer data ownership', value: 'thirdparty_only', hoursImpact: 6 },
+        { label: 'Owned digital membership and automated WhatsApp VIP loyalty notifications', value: 'owned_loyalty', hoursImpact: 2 }
       ]
     };
   }
 
-  if (industry.includes('manufacturing') || industry.includes('logistics')) {
+  if (industry.includes('manufacturing') || industry.includes('logistics') || industry.includes('warehouse')) {
     return {
       questionId: 'mfg_continuity',
-      title: 'If your primary on-premise computer or server suffered a ransomware attack or failure today, how would you recover?',
-      subtitle: 'Over 68% of Malaysian SMEs lose critical records permanently without certified cloud backup.',
+      title: 'If your primary server or on-premise computer suffered a ransomware attack or hard drive crash today, how would you recover?',
+      subtitle: 'Over 68% of Malaysian SMEs lose critical CAD/ERP records permanently without immutable cloud backup.',
       options: [
-        { label: 'No backup exists; recovery would be catastrophic', value: 'no_backup', hoursImpact: 20 },
-        { label: 'Manual weekly backup to an external USB drive kept on-site', value: 'usb_manual', hoursImpact: 10 },
-        { label: 'Personal Google Drive/Dropbox folder managed manually', value: 'cloud_folder', hoursImpact: 6 },
-        { label: 'Automated daily cloud snapshot with immutable ransomware defense', value: 'acronis_active', hoursImpact: 1 }
+        { label: 'No verified backup exists; recovery would be catastrophic downtime', value: 'no_backup', hoursImpact: 22 },
+        { label: 'Manual weekly backup to an external USB hard drive kept on-site', value: 'usb_manual', hoursImpact: 12 },
+        { label: 'Personal Google Drive or Dropbox folder managed ad-hoc by staff', value: 'cloud_folder', hoursImpact: 7 },
+        { label: 'Automated daily cloud snapshots with active anti-ransomware protection', value: 'acronis_active', hoursImpact: 1 }
+      ]
+    };
+  }
+
+  if (industry.includes('construction') || industry.includes('engineering') || industry.includes('property')) {
+    return {
+      questionId: 'construction_docs',
+      title: 'How does your project team coordinate site progress updates, variation orders, and subcontractor billings?',
+      subtitle: 'Disjointed communication between site supervisors and finance creates costly dispute delays.',
+      options: [
+        { label: 'Scattered personal WhatsApp group chats with paper site receipts and forms', value: 'whatsapp_site', hoursImpact: 18 },
+        { label: 'End-of-week spreadsheet consolidations leading to delayed claim submissions', value: 'excel_site', hoursImpact: 12 },
+        { label: 'Cloud shared folders for site photos, but billings are still processed manually', value: 'cloud_folders_site', hoursImpact: 6 },
+        { label: 'Centralized project cloud portal with real-time milestone tracking and digital sign-offs', value: 'integrated_site', hoursImpact: 2 }
+      ]
+    };
+  }
+
+  if (industry.includes('education') || industry.includes('training')) {
+    return {
+      questionId: 'edu_leads',
+      title: 'How does your organization capture student inquiries and manage course registrations?',
+      subtitle: 'Educational providers lose over 30% of student sign-ups when inquiries are not followed up within 15 minutes.',
+      options: [
+        { label: 'Manual responses to social media DMs and phone calls during working hours only', value: 'manual_dms', hoursImpact: 16 },
+        { label: 'Basic Google Forms requiring manual spreadsheet copy-pasting to issue payment details', value: 'forms_manual', hoursImpact: 10 },
+        { label: 'Website form with email notifications, but follow-up takes 1 to 2 business days', value: 'slow_email', hoursImpact: 6 },
+        { label: '24/7 automated WhatsApp inquiry bot with instant course brochure delivery and seat booking', value: 'automated_edu', hoursImpact: 1 }
       ]
     };
   }
 
   return {
     questionId: 'general_inquiries',
-    title: 'Approximately how many inquiries or quote requests does your team handle each week?',
+    title: 'Approximately how many customer inquiries or quote requests does your team handle each week?',
     subtitle: 'This allows our calculation engine to project your exact administrative recovery in Ringgit Malaysia.',
     options: [
-      { label: '10 to 30 inquiries / week (mostly manual follow-ups)', value: 'inquiries_low', hoursImpact: 8 },
-      { label: '30 to 80 inquiries / week (high manual workload)', value: 'inquiries_med', hoursImpact: 14 },
-      { label: '80+ inquiries / week (team struggles to respond on time)', value: 'inquiries_high', hoursImpact: 22 },
-      { label: 'Low inquiry volume; seeking inbound growth systems', value: 'seeking_leads', hoursImpact: 5 }
+      { label: '10 to 30 inquiries / week (mostly manual WhatsApp/email follow-ups)', value: 'inquiries_low', hoursImpact: 8 },
+      { label: '30 to 80 inquiries / week (high manual workload consuming staff capacity)', value: 'inquiries_med', hoursImpact: 14 },
+      { label: '80+ inquiries / week (team regularly struggles to respond before customers go elsewhere)', value: 'inquiries_high', hoursImpact: 22 },
+      { label: 'Low inquiry volume currently; urgently seeking scalable digital inbound systems', value: 'seeking_leads', hoursImpact: 5 }
     ]
   };
 }
 
 /**
- * AI-Augmented dynamic follow-up question generator using Gemini 3.6 Flash
- * Falls back cleanly to getDynamicFollowUpQuestion if API is unavailable
+ * AI-Augmented dynamic follow-up question generator using Gemini 3.5 Flash Lite
+ * Features automatic multi-model fallback cascade and robust JSON parsing
  */
 async function generateAiDynamicQuestion(params = {}, passedApiKey = null) {
-  const apiKey = passedApiKey || process.env.GEMINI_API_KEY;
+  let apiKey = passedApiKey;
+  if (!apiKey && typeof process !== 'undefined' && process && process.env) {
+    apiKey = process.env.GEMINI_API_KEY;
+  }
   const fallback = getDynamicFollowUpQuestion(params);
 
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
     return fallback;
   }
 
-  try {
-    const prompt = `You are the lead SME Digital Transformation Architect at Exabytes Malaysia.
-An SME user is completing our Digital Maturity Diagnostic. Here is their profile:
-- Company Name: ${params.companyName || 'Malaysian SME'}
-- Industry Sector: ${params.industry || 'General Business'}
-- Employee Headcount: ${params.teamSize || '5 - 15 employees'}
-- Primary Bottleneck: ${params.bottleneck || 'Manual administrative overhead'}
+  // Model cascade: prioritize models with active quota in Generative AI API
+  const models = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3-flash-preview'];
+
+  const prompt = `You are the Senior SME Digital Transformation Architect at Exabytes Malaysia.
+An SME business owner is completing our Digital Maturity Diagnostic. Here is their profile:
+- Company Name: ${params.companyName || 'Malaysian SME Enterprise'}
+- Industry Sector: ${params.industry || 'General SME'}
+- Headcount / Team Size: ${params.teamSize || '5 - 15 employees'}
+- Primary Operational Bottleneck: ${params.bottleneck || 'Manual administrative overhead'}
 - Weekly Hours Wasted: ${params.hoursWasted || 12} hrs/week
 
 Generate exactly 1 high-impact dynamic follow-up question with 4 realistic multiple-choice options to quantify their operational inefficiency.
-Focus on Malaysian business realities (e.g. WhatsApp reliance, paper invoices, SST/invoicing delays, PDPA data loss).
+Address this specific business by name (${params.companyName || 'your business'}) and focus on Malaysian commercial realities (e.g. WhatsApp sales chaos, paper invoices, SST/invoicing friction, PDPA record security, delayed quotation turnaround).
 
 Output strictly valid JSON with this exact schema:
 {
   "questionId": "string",
-  "title": "Clear, engaging question string",
+  "title": "Clear, engaging question string addressing their specific industry",
   "subtitle": "Short 1-sentence explanation of why this matters for Malaysian SME profitability",
   "options": [
-    { "label": "Option 1 description", "value": "opt_1", "hoursImpact": 16 },
-    { "label": "Option 2 description", "value": "opt_2", "hoursImpact": 10 },
-    { "label": "Option 3 description", "value": "opt_3", "hoursImpact": 5 },
-    { "label": "Option 4 description", "value": "opt_4", "hoursImpact": 1 }
+    { "label": "Option 1 description (severe manual inefficiency)", "value": "opt_1", "hoursImpact": 16 },
+    { "label": "Option 2 description (partial/delayed manual process)", "value": "opt_2", "hoursImpact": 10 },
+    { "label": "Option 3 description (semi-digital but fragmented)", "value": "opt_3", "hoursImpact": 5 },
+    { "label": "Option 4 description (fully automated / cloud integrated)", "value": "opt_4", "hoursImpact": 1 }
   ]
 }`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
-    });
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json' }
+        })
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (rawText) {
-        const parsed = JSON.parse(rawText);
-        if (parsed.title && Array.isArray(parsed.options) && parsed.options.length === 4) {
-          parsed.aiGenerated = true;
-          return parsed;
+      if (response.ok) {
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          const parsed = JSON.parse(rawText);
+          if (parsed.title && Array.isArray(parsed.options) && parsed.options.length === 4) {
+            parsed.aiGenerated = true;
+            return parsed;
+          }
         }
       }
+    } catch (err) {
+      // Try next model in cascade
     }
-  } catch (err) {
-    console.warn('[AI Question] Gemini call failed, using SOP fallback:', err.message);
   }
 
   return fallback;

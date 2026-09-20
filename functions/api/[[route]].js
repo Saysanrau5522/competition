@@ -158,7 +158,8 @@ export async function onRequest(context) {
           industry: url.searchParams.get('industry') || '',
           bottleneck: url.searchParams.get('bottleneck') || '',
           companyName: url.searchParams.get('companyName') || '',
-          teamSize: url.searchParams.get('teamSize') || ''
+          teamSize: url.searchParams.get('teamSize') || '',
+          hoursWasted: url.searchParams.get('hoursWasted') || ''
         };
       }
 
