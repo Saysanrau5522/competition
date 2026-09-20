@@ -3,18 +3,82 @@
  * Zero native dependencies - safe for Cloudflare Edge & Node
  */
 
-function buildReportHtml(reportData) {
-  const {
-    companyName = 'Malaysian SME Enterprise',
-    contactName = 'Business Owner',
-    contactEmail = 'contact@sme.com.my',
-    industry = 'General SME',
-    teamSize = '5-15 Employees',
-    scores = { totalScore: 42, tier: 'Digital Practitioner', aiGrade: 'B', breakdown: {} },
-    roi = { formatted: {}, weeklyWastedHours: 12 },
-    roadmap = [],
-    products = []
-  } = reportData;
+function buildReportHtml(reportData = {}) {
+  const data = reportData || {};
+  const companyName = data.companyName || 'Malaysian SME Enterprise';
+  const contactName = data.contactName || 'Business Owner';
+  const contactEmail = data.contactEmail || 'contact@sme.com.my';
+  const industry = data.industry || 'General SME';
+  const teamSize = data.teamSize || '5-15 Employees';
+
+  const scores = data.scores || {};
+  const totalScore = (typeof scores.totalScore === 'number') ? scores.totalScore : 42;
+  const tier = scores.tier || 'Digital Practitioner';
+  const aiGrade = scores.aiGrade || 'B';
+  const tierSummary = scores.tierSummary || 'Business possesses core digital capabilities and is well-positioned for AI-assisted workflow automation.';
+  const breakdown = scores.breakdown || {};
+
+  const roi = data.roi || {};
+  const roiFormatted = roi.formatted || {};
+  const weeklyWastedHours = roi.weeklyWastedHours || data.hoursWasted || 12;
+
+  const rawRoadmap = Array.isArray(data.roadmap) ? data.roadmap : [];
+  const roadmap = rawRoadmap.length > 0 ? rawRoadmap : [
+    {
+      phase: 'Phase 1',
+      title: 'Foundation & Immediate Quick Wins',
+      timeline: 'Days 1–30',
+      focus: 'Eliminate foundational data risk and launch lead capture.',
+      keyMilestones: [
+        'Deploy enterprise business email with branded domain',
+        'Activate Acronis automated cloud backups for critical databases',
+        'Launch mobile-optimized contact points with instant messaging'
+      ],
+      expectedOutcome: 'Zero data loss vulnerability and 100% professional credibility.'
+    },
+    {
+      phase: 'Phase 2',
+      title: 'Workflow Automation & CRM',
+      timeline: 'Days 31–90',
+      focus: 'Centralize prospect records and streamline quote dispatch.',
+      keyMilestones: [
+        'Migrate manual prospect spreadsheets to unified Cloud CRM',
+        'Integrate multi-agent synchronized sales follow-ups',
+        'Deploy automated quotation dispatch workflows'
+      ],
+      expectedOutcome: `Reclaim ~${Math.round((parseFloat(weeklyWastedHours) || 12) * 0.7)} hours/week of administrative overhead.`
+    },
+    {
+      phase: 'Phase 3',
+      title: 'AI Copilot Integration & Scaled Growth',
+      timeline: 'Days 91–180',
+      focus: 'Deploy 24/7 conversational AI agents and predictive re-engagement.',
+      keyMilestones: [
+        'Embed AI Chatbot trained on catalog FAQs for 24/7 lead qualification',
+        'Activate automated customer reactivation campaigns',
+        'Scale cloud compute resources as traffic surges'
+      ],
+      expectedOutcome: 'Achieve estimated 25% lift in deal conversion without additional staff.'
+    }
+  ];
+
+  const rawProducts = Array.isArray(data.products) ? data.products : [];
+  const products = rawProducts.length > 0 ? rawProducts : [
+    {
+      priority: 'Priority 1',
+      name: 'Exabytes EBiz Pro Business Email',
+      tagline: 'Enterprise domain email & collaborative cloud suite',
+      category: 'Digital Identity',
+      priceMYR: 'RM 9.90 / user / mo'
+    },
+    {
+      priority: 'Priority 2',
+      name: 'Exabytes Acronis Cyber Protect Cloud',
+      tagline: 'Automated disk backup with ransomware defense',
+      category: 'Cloud Security',
+      priceMYR: 'RM 89.00 / month'
+    }
+  ];
 
   const generatedDate = new Date().toLocaleDateString('en-MY', {
     day: 'numeric',
@@ -603,10 +667,10 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>1. Web & Digital Presence</span>
-          <span>${scores.breakdown.webScore || 10} / 20</span>
+          <span>${breakdown.webScore || 10} / 20</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.webScore || 10) / 20) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.webScore || 10) / 20) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Branded domain, SSL certification, and conversion-optimized mobile storefront.</div>
       </div>
@@ -614,10 +678,10 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>2. Cloud Infrastructure & Backup</span>
-          <span>${scores.breakdown.cloudScore || 10} / 20</span>
+          <span>${breakdown.cloudScore || 10} / 20</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.cloudScore || 10) / 20) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.cloudScore || 10) / 20) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Automated off-site cloud storage and disaster resilience under PDPA guidelines.</div>
       </div>
@@ -625,10 +689,10 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>3. CRM & Lead Tracking</span>
-          <span>${scores.breakdown.crmScore || 7} / 15</span>
+          <span>${breakdown.crmScore || 7} / 15</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.crmScore || 7) / 15) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.crmScore || 7) / 15) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Centralized customer contact ledger and automated follow-up communications.</div>
       </div>
@@ -636,10 +700,10 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>4. Marketing Automation</span>
-          <span>${scores.breakdown.mktgScore || 7} / 15</span>
+          <span>${breakdown.mktgScore || 7} / 15</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.mktgScore || 7) / 15) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.mktgScore || 7) / 15) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Automated promotional newsletters, social scheduling, and prospect nurturing.</div>
       </div>
@@ -647,10 +711,10 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>5. Cybersecurity & Compliance</span>
-          <span>${scores.breakdown.secScore || 7} / 15</span>
+          <span>${breakdown.secScore || 7} / 15</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.secScore || 7) / 15) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.secScore || 7) / 15) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Active ransomware protection, email spam defense, and encrypted customer data.</div>
       </div>
@@ -658,17 +722,17 @@ function buildReportHtml(reportData) {
       <div class="pillar-card">
         <div class="pillar-card-header">
           <span>6. AI Readiness & Process Agility</span>
-          <span>${scores.breakdown.aiScore || 7} / 15</span>
+          <span>${breakdown.aiScore || 7} / 15</span>
         </div>
         <div class="pillar-bar">
-          <div class="pillar-bar-fill" style="width: ${((scores.breakdown.aiScore || 7) / 15) * 100}%;"></div>
+          <div class="pillar-bar-fill" style="width: ${((breakdown.aiScore || 7) / 15) * 100}%;"></div>
         </div>
         <div class="pillar-desc">Standardized digital data feeds ready for automated AI copilot ingestion.</div>
       </div>
     </div>
 
     <div style="background: #eff6ff; border-left: 4px solid #0066cc; padding: 12px 16px; border-radius: 6px; font-size: 11px; color: #1e3a8a;">
-      <strong>Strategic Takeaway:</strong> Moving from <em>${scores.tier}</em> to the next bracket requires eliminating manual communication bottlenecks before investing in advanced algorithms.
+      <strong>Strategic Takeaway:</strong> Moving from <em>${tier}</em> to the next bracket requires eliminating manual communication bottlenecks before investing in advanced algorithms.
     </div>
 
     <div class="page-footer">
@@ -692,19 +756,23 @@ function buildReportHtml(reportData) {
     </p>
 
     <div class="timeline-container">
-      ${roadmap.map((phase, idx) => `
+      ${roadmap.map((phase, idx) => {
+        const milestones = Array.isArray(phase.keyMilestones)
+          ? phase.keyMilestones
+          : (Array.isArray(phase.deliverables) ? phase.deliverables : []);
+        return `
         <div class="timeline-phase" style="border-left-color: ${idx === 0 ? '#0066cc' : idx === 1 ? '#f59e0b' : '#10b981'};">
-          <span class="phase-badge" style="background: ${idx === 0 ? '#0066cc' : idx === 1 ? '#f59e0b' : '#10b981'};">${phase.phase}: ${phase.timeline}</span>
-          <div class="phase-title">${phase.title}</div>
-          <div class="phase-meta">${phase.focus}</div>
+          <span class="phase-badge" style="background: ${idx === 0 ? '#0066cc' : idx === 1 ? '#f59e0b' : '#10b981'};">${phase.phase || ('Phase ' + (idx + 1))}: ${phase.timeline || ''}</span>
+          <div class="phase-title">${phase.title || ''}</div>
+          <div class="phase-meta">${phase.focus || ''}</div>
           <ul class="milestone-list">
-            ${phase.keyMilestones.map(m => `<li>${m}</li>`).join('')}
+            ${milestones.map(m => `<li>${m}</li>`).join('')}
           </ul>
           <div class="phase-outcome">
-            Target Outcome: ${phase.expectedOutcome}
+            Target Outcome: ${phase.expectedOutcome || phase.focus || 'Accelerated operational efficiency'}
           </div>
         </div>
-      `).join('')}
+      `;}).join('')}
     </div>
 
     <div class="page-footer">
@@ -724,21 +792,21 @@ function buildReportHtml(reportData) {
 
     <h2>Deterministic Financial ROI & Business Case</h2>
     <p style="color:#64748b; margin-bottom: 18px;">
-      All financial metrics below are calculated using localized Malaysian economic baselines (RM 25.00/hr admin wage) against your stated ${roi.weeklyWastedHours || 12} wasted hours/week:
+      All financial metrics below are calculated using localized Malaysian economic baselines (RM 25.00/hr admin wage) against your stated ${weeklyWastedHours} wasted hours/week:
     </p>
 
     <div class="roi-grid">
       <div class="roi-card">
         <div class="roi-card-label">Annual Admin Hours Saved</div>
-        <div class="roi-card-val">${roi.formatted ? roi.formatted.annualHoursSaved : '437 hrs'}</div>
+        <div class="roi-card-val">${roiFormatted.annualHoursSaved || '437 hrs'}</div>
       </div>
       <div class="roi-card">
         <div class="roi-card-label">Direct Labor Cash Recovered</div>
-        <div class="roi-card-val highlight">${roi.formatted ? roi.formatted.annualAdminCashSaved : 'RM 10,920'}</div>
+        <div class="roi-card-val highlight">${roiFormatted.annualAdminCashSaved || 'RM 10,920'}</div>
       </div>
       <div class="roi-card">
         <div class="roi-card-label">12-Month ROI Multiplier</div>
-        <div class="roi-card-val highlight">${roi.formatted ? roi.formatted.roiMultiple : '8.4x'}</div>
+        <div class="roi-card-val highlight">${roiFormatted.roiMultiple || '8.4x'}</div>
       </div>
     </div>
 
@@ -753,12 +821,12 @@ function buildReportHtml(reportData) {
         </tr>
       </thead>
       <tbody>
-        ${products.map(p => `
+        ${products.map((p, idx) => `
           <tr>
-            <td><span class="product-priority">${p.priority}</span></td>
-            <td><strong>${p.name}</strong><br><span style="color:#64748b; font-size:10px;">${p.tagline}</span></td>
-            <td>${p.category}</td>
-            <td><strong>${p.priceMYR}</strong></td>
+            <td><span class="product-priority">${p.priority || ('Priority ' + (idx + 1))}</span></td>
+            <td><strong>${p.name || 'Exabytes Cloud Solution'}</strong><br><span style="color:#64748b; font-size:10px;">${p.tagline || p.tag || (Array.isArray(p.benefits) ? p.benefits.join(' • ') : '')}</span></td>
+            <td>${p.category || p.tag || 'Cloud Solutions'}</td>
+            <td><strong>${p.priceMYR || 'Custom Quote'}</strong></td>
           </tr>
         `).join('')}
       </tbody>

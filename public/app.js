@@ -474,21 +474,25 @@ function renderRadarChart(scores) {
  */
 function renderRoadmapTimeline(roadmap) {
   const container = document.getElementById('phasesTimelineContainer');
-  if (!container) return;
+  if (!container || !Array.isArray(roadmap)) return;
 
-  container.innerHTML = roadmap.map((phase, idx) => `
+  container.innerHTML = roadmap.map((phase, idx) => {
+    const milestones = Array.isArray(phase.keyMilestones)
+      ? phase.keyMilestones
+      : (Array.isArray(phase.deliverables) ? phase.deliverables : []);
+    return `
     <div class="phase-card phase-${idx + 1}">
-      <span class="phase-badge-pill">${phase.phase}</span>
-      <div class="phase-card-title">${phase.title}</div>
-      <div class="phase-card-timeline">${phase.timeline}</div>
+      <span class="phase-badge-pill">${phase.phase || ('Phase ' + (idx + 1))}</span>
+      <div class="phase-card-title">${phase.title || ''}</div>
+      <div class="phase-card-timeline">${phase.timeline || ''}</div>
       <ul class="milestones-ul">
-        ${phase.keyMilestones.map(m => `<li>${m}</li>`).join('')}
+        ${milestones.map(m => `<li>${m}</li>`).join('')}
       </ul>
       <div class="phase-card-outcome">
-        <strong>Expected Impact:</strong> ${phase.expectedOutcome}
+        <strong>Expected Impact:</strong> ${phase.expectedOutcome || phase.focus || 'Optimized operational efficiency'}
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 /**
@@ -598,99 +602,101 @@ function initActionButtons() {
 }
 
 /**
- * Direct client-side PDF compilation using html2pdf.js
+ * High-fidelity client-side PDF generation engine using isolated iframe + html2canvas + jsPDF
  */
 async function generateClientSidePdf(data) {
+  let iframe = null;
   try {
+    console.log('[CLIENT PDF] Starting generation, fetching /api/diagnostic/html-report...');
     const response = await fetch('/api/diagnostic/html-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status} when generating blueprint HTML`);
+    }
+
     const html = await response.text();
+    console.log('[CLIENT PDF] Received HTML length:', html.length);
     const safeName = (data.companyName || 'SME').replace(/[^a-zA-Z0-9]/g, '_');
 
-    // Parse HTML to extract style rules and pages
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const styleContent = Array.from(doc.querySelectorAll('style')).map(s => s.innerHTML).join('\n');
-    const pages = Array.from(doc.querySelectorAll('.page'));
+    // Create an isolated, off-screen iframe to prevent host dark-mode or CSS leaking
+    iframe = document.createElement('iframe');
+    iframe.id = 'blueprintPdfRenderFrame';
+    iframe.style.cssText = 'position: fixed; top: 0; left: 0; width: 794px; height: 1123px; border: 0; opacity: 0.01; pointer-events: none; z-index: 99999; background: #ffffff;';
+    document.body.appendChild(iframe);
 
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+
+    // Allow time for web fonts and SVG layouts to compute
+    console.log('[CLIENT PDF] Waiting 600ms for iframe rendering...');
+    await new Promise(r => setTimeout(r, 600));
+
+    // Hide any web-preview screen bars inside the iframe
+    const screenBar = iframeDoc.querySelector('.screen-bar');
+    if (screenBar) screenBar.style.display = 'none';
+
+    const pages = Array.from(iframeDoc.querySelectorAll('.page'));
+    console.log('[CLIENT PDF] Pages found in iframe:', pages.length);
     if (pages.length === 0) {
-      openPrintReadyReport(data);
-      return;
+      throw new Error('No report pages found in generated blueprint HTML');
     }
 
-    // Build visible-to-renderer container mounted at (0,0) behind page z-index
-    let wrapper = document.getElementById('blueprintPdfWrapper');
-    if (wrapper) wrapper.remove();
-    wrapper = document.createElement('div');
-    wrapper.id = 'blueprintPdfWrapper';
-    wrapper.style.cssText = 'position: absolute; top: 0; left: 0; width: 794px; z-index: -99999; background: #ffffff; pointer-events: none; opacity: 0.99;';
+    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    const h2c = window.html2canvas;
 
-    // A4 dimensions at 96 DPI: 794px width x 1123px height
-    wrapper.innerHTML = `
-      <style>
-        ${styleContent}
-        #blueprintPdfWrapper {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          color: #1e293b !important;
-          background: #ffffff !important;
-        }
-        #blueprintPdfWrapper .page {
-          width: 794px !important;
-          min-height: 1123px !important;
-          max-height: 1123px !important;
-          box-sizing: border-box !important;
-          margin: 0 !important;
-          padding: 70px 60px !important;
-          background: #ffffff !important;
-          position: relative !important;
-          overflow: hidden !important;
-          page-break-after: always !important;
-          break-after: page !important;
-        }
-        #blueprintPdfWrapper .screen-bar {
-          display: none !important;
-        }
-      </style>
-      ${pages.map(p => p.outerHTML).join('\n')}
-    `;
-
-    document.body.appendChild(wrapper);
-
-    // Wait 350ms for styles and vector SVG layout computation
-    await new Promise(resolve => setTimeout(resolve, 350));
-
-    if (window.html2pdf) {
-      const opt = {
-        margin: 0,
-        filename: `Exabytes_Blueprint_${safeName}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 794
-        },
-        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
-
-      await window.html2pdf().set(opt).from(wrapper).save();
-      wrapper.remove();
-      showToast('Executive 4-Page PDF downloaded successfully!');
-    } else {
-      wrapper.remove();
-      openPrintReadyReport(data);
+    if (!jsPDFClass || !h2c) {
+      throw new Error('PDF rendering libraries (html2canvas / jsPDF) not loaded');
     }
+
+    // Standard A4 portrait in millimeters (210mm x 297mm)
+    const pdf = new jsPDFClass({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    for (let i = 0; i < pages.length; i++) {
+      console.log(`[CLIENT PDF] Capturing page ${i + 1}/${pages.length}...`);
+      const pageEl = pages[i];
+      pageEl.style.margin = '0';
+      pageEl.style.boxShadow = 'none';
+
+      const canvas = await h2c(pageEl, {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794,
+        scrollY: 0,
+        scrollX: 0
+      });
+
+      console.log(`[CLIENT PDF] Page ${i + 1} canvas ready: ${canvas.width}x${canvas.height}`);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      if (i > 0) pdf.addPage('a4', 'portrait');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+    }
+
+    console.log('[CLIENT PDF] Saving PDF file...');
+    pdf.save(`Exabytes_Blueprint_${safeName}.pdf`);
+    console.log('[CLIENT PDF] PDF save triggered successfully!');
+    showToast('Executive 4-Page PDF downloaded successfully!');
   } catch (err) {
-    console.error('Client PDF compilation error:', err);
-    showToast('Direct download error. Opening print preview...');
+    console.error('Client PDF compilation error:', err.message, err.stack);
+    showToast('Direct PDF error. Opening print preview in browser...');
     openPrintReadyReport(data);
+  } finally {
+    if (iframe && iframe.parentNode) {
+      iframe.remove();
+    }
   }
 }
 
