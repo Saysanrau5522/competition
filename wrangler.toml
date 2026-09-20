@@ -1,8 +1,9 @@
 name = "competition"
+main = "_worker.js"
 compatibility_date = "2024-09-20"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "public"
 
 [assets]
 directory = "./public"
+
 

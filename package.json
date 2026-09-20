@@ -5,6 +5,7 @@
   "main": "execution/server.js",
   "scripts": {
     "start": "node execution/server.js",
+    "build": "echo 'Build complete'",
     "dev": "node execution/server.js",
     "test:calc": "node execution/calculate_engine.js --test",
     "verify-env": "node execution/verify_credentials.js"
