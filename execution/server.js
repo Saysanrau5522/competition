@@ -199,6 +199,43 @@ app.post('/api/consultation/submit', async (req, res) => {
 });
 
 /**
+ * GET /api/health
+ * Health & diagnostic check for environment variables and Google Sheets connection
+ */
+app.get('/api/health', async (req, res) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privKey = process.env.GOOGLE_PRIVATE_KEY;
+
+  let leadsCount = 0;
+  let sheetsStatus = 'Not connected';
+  try {
+    const leadsRes = await fetchAllLeads();
+    leadsCount = leadsRes.leads ? leadsRes.leads.length : 0;
+    sheetsStatus = `Connected (${leadsRes.source})`;
+  } catch (e) {
+    sheetsStatus = `Error: ${e.message}`;
+  }
+
+  res.json({
+    status: 'online',
+    runtime: 'Node.js Express Server',
+    timestamp: new Date().toISOString(),
+    environment_checks: {
+      GEMINI_API_KEY: apiKey ? `CONFIGURED (${apiKey.slice(0, 8)}...)` : 'MISSING',
+      GOOGLE_SHEET_ID: sheetId ? `CONFIGURED (${sheetId})` : 'MISSING',
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: email ? `CONFIGURED (${email})` : 'MISSING',
+      GOOGLE_PRIVATE_KEY: privKey ? 'CONFIGURED (Header detected)' : 'MISSING'
+    },
+    google_sheets_connection: {
+      status: sheetsStatus,
+      total_leads: leadsCount
+    }
+  });
+});
+
+/**
  * GET /api/appointments/booked
  * Returns all booked slots so client calendar can disable unavailable times
  */
