@@ -34,16 +34,13 @@
   <header class="site-header">
     <div class="header-inner container">
       <a href="#" class="brand-logo" id="headerLogo">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
+        <div class="brand-cat-wrap">
+          <img src="assets/cat_laptop.png" alt="Exabytes Cat" class="brand-cat-img">
+          <span class="cat-live-dot" title="Advisor Active"></span>
         </div>
         <div class="brand-text">
           <span class="brand-name">EXABYTES</span>
-          <span class="brand-sub">Digital Growth Advisor</span>
+          <span class="brand-sub">AI Digital Growth Advisor</span>
         </div>
       </a>
 
@@ -98,6 +95,36 @@
     <section class="wizard-section" id="wizardSection">
       <div class="wizard-card glass-panel">
         
+        <!-- Segmented Capsule Progress Indicators (From Reference Design) -->
+        <div class="card-segments" id="cardSegments">
+          <div class="segment active" data-step="1"></div>
+          <div class="segment" data-step="2"></div>
+          <div class="segment" data-step="3"></div>
+          <div class="segment" data-step="4"></div>
+          <div class="segment" data-step="5"></div>
+        </div>
+
+        <!-- Moving Interactive Cat Avatar Component (Transparent Background) -->
+        <div class="cat-companion-stage" id="catCompanionStage">
+          <div class="cat-glow-aura"></div>
+          <div class="cat-avatar-interactive" id="catAvatarInteractive" role="button" tabindex="0" title="Click me for a cute meow reaction!">
+            <img src="assets/cat_laptop.png" alt="AI Cat Advisor" class="cat-sprite" id="catSprite">
+            <div class="coffee-steam">
+              <span class="steam s1"></span>
+              <span class="steam s2"></span>
+              <span class="steam s3"></span>
+            </div>
+            <div class="cat-click-reaction" id="catClickReaction">✨ Meow!</div>
+          </div>
+          <div class="cat-dialog-box" id="catDialogBox">
+            <div class="cat-dialog-header">
+              <span class="cat-badge-label">🐾 EXABYTES AI ADVISOR</span>
+              <span class="cat-action-hint">Active • Ready to Assist</span>
+            </div>
+            <p class="cat-speech" id="catSpeech">Meow! Welcome to your SME Growth Audit. Let's evaluate your enterprise's true digital maturity!</p>
+          </div>
+        </div>
+
         <!-- Progress Bar Header -->
         <div class="wizard-progress-wrap">
           <div class="progress-info">
@@ -397,6 +424,25 @@
     <!-- RESULTS DASHBOARD (Revealed after evaluation) -->
     <section class="results-section d-none" id="resultsSection">
       
+      <!-- Executive Boss Cat Celebration Banner -->
+      <div class="results-boss-cat-card glass-panel">
+        <div class="boss-cat-avatar-wrap">
+          <div class="boss-cat-halo"></div>
+          <img src="assets/cat_boss.png" alt="Boss Cat" class="boss-cat-img" id="bossCatImg">
+          <div class="coffee-steam">
+            <span class="steam s1"></span>
+            <span class="steam s2"></span>
+          </div>
+        </div>
+        <div class="boss-cat-content">
+          <span class="boss-tag-pill">☕ EXECUTIVE AUDIT COMPLETE</span>
+          <h2 class="boss-heading">Blueprint Generated, Boss!</h2>
+          <p class="boss-subtext">
+            Our AI advisor has benchmarked your enterprise against Malaysian industry baselines, calculated direct Ringgit labor savings, and sequenced your 12-month transformation roadmap.
+          </p>
+        </div>
+      </div>
+
       <!-- Executive Summary Header Banner -->
       <div class="results-header-banner glass-panel">
         <div class="results-top-meta">

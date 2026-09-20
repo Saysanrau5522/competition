@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStepNavigation();
   initRangeSlider();
   initActionButtons();
+  initCatInteractivity();
 });
 
 /**
@@ -25,6 +26,50 @@ function initRangeSlider() {
   if (rangeInput && displayVal) {
     rangeInput.addEventListener('input', (e) => {
       displayVal.textContent = `${e.target.value} hours / week`;
+    });
+  }
+}
+
+/**
+ * Initializes interactive Cat Avatar reactions and speeches
+ */
+function initCatInteractivity() {
+  const catBox = document.getElementById('catAvatarInteractive');
+  const reaction = document.getElementById('catClickReaction');
+  const catSpeech = document.getElementById('catSpeech');
+  const compInput = document.getElementById('companyName');
+
+  const meows = [
+    "✨ Purr! You're doing great!",
+    "🐾 Meow! Exabytes AI is ready!",
+    "✨ Looking sharp, Boss!",
+    "☕ Coffee break? Let's automate your ops first!",
+    "🚀 100% deterministic Malaysian ROI!"
+  ];
+
+  if (catBox) {
+    catBox.addEventListener('click', () => {
+      const randomMeow = meows[Math.floor(Math.random() * meows.length)];
+      if (reaction) {
+        reaction.textContent = randomMeow;
+        reaction.classList.add('show');
+        setTimeout(() => reaction.classList.remove('show'), 1600);
+      }
+      const sprite = document.getElementById('catSprite');
+      if (sprite) {
+        sprite.classList.remove('bounce');
+        void sprite.offsetWidth;
+        sprite.classList.add('bounce');
+      }
+    });
+  }
+
+  if (compInput) {
+    compInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val && val.length > 2 && currentStep === 1 && catSpeech) {
+        catSpeech.textContent = `Nice to meet you, ${val}! Let's optimize your operations 🐾`;
+      }
     });
   }
 }
@@ -78,7 +123,7 @@ function initStepNavigation() {
 }
 
 /**
- * Changes active wizard step and updates progress indicators
+ * Changes active wizard step, updates progress indicators, segments, and animated cat speech
  * @param {number} stepNumber
  */
 function goToStep(stepNumber) {
@@ -94,6 +139,40 @@ function goToStep(stepNumber) {
         stepEl.classList.remove('active');
       }
     }
+  }
+
+  // Update top segments (matching reference design pill indicators)
+  document.querySelectorAll('#cardSegments .segment').forEach((seg, idx) => {
+    const step = idx + 1;
+    seg.classList.remove('active', 'completed');
+    if (step === currentStep) {
+      seg.classList.add('active');
+    } else if (step < currentStep) {
+      seg.classList.add('completed');
+    }
+  });
+
+  // Update dynamic cat speeches & animate cat sprite
+  const catMessages = [
+    "Meow! Welcome to your SME Growth Audit. What's your company name, Boss? 🐾",
+    "Scanning your software tools... select what currently runs in your business! 💻",
+    "Manual friction drains real Ringgit! Adjust the slider to quantify wasted hours ⏰",
+    "Purr-fect! Let me ask one tailored operational question for your sector 🎯",
+    "Almost ready! Where should I deliver your confidential 12-month blueprint? 📩"
+  ];
+  const catSpeech = document.getElementById('catSpeech');
+  const catSprite = document.getElementById('catSprite');
+  if (catSpeech && catMessages[currentStep - 1]) {
+    catSpeech.style.opacity = '0';
+    setTimeout(() => {
+      catSpeech.textContent = catMessages[currentStep - 1];
+      catSpeech.style.opacity = '1';
+    }, 150);
+  }
+  if (catSprite) {
+    catSprite.classList.remove('bounce');
+    void catSprite.offsetWidth;
+    catSprite.classList.add('bounce');
   }
 
   // Update progress bar
@@ -132,14 +211,27 @@ function renderDynamicQuestion(q) {
     optCard.className = 'dynamic-option-card';
     optCard.dataset.value = opt.value;
     optCard.innerHTML = `
-      <div class="dynamic-radio"></div>
-      <div class="dynamic-text-title">${opt.label}</div>
+      <div class="dynamic-radio-wrap">
+        <div class="dynamic-radio"></div>
+        <div class="dynamic-text-title">${opt.label}</div>
+      </div>
+      <div class="dynamic-arrow-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
     `;
 
     optCard.addEventListener('click', () => {
       document.querySelectorAll('.dynamic-option-card').forEach(c => c.classList.remove('selected'));
       optCard.classList.add('selected');
       dynamicAnswerSelected = opt.value;
+      
+      // Cat joyful bounce reaction when an option is selected
+      const catSprite = document.getElementById('catSprite');
+      if (catSprite) {
+        catSprite.classList.remove('bounce');
+        void catSprite.offsetWidth;
+        catSprite.classList.add('bounce');
+      }
     });
 
     // Select first by default
