@@ -451,9 +451,14 @@ function openLeadDossier(leadId) {
 
   // AI Script
   const cheat = lead.salesCheatSheet || {};
-  document.getElementById('scriptHook').textContent = cheat.hook || `Hi ${lead.contactName || 'there'}, I reviewed your diagnostic for ${lead.companyName}. I noticed your team is dedicating significant hours weekly to ${lead.topPainPoint || 'manual workflows'}.`;
-  document.getElementById('scriptPrescription').textContent = cheat.prescription || `Rather than an expensive IT overhaul, our Phase 1 recommendation is deploying ${lead.recommendedPackage || 'Exabytes Cloud Suite'} to solve this immediately.`;
-  document.getElementById('scriptMath').textContent = cheat.financialMath || `Reclaiming these wasted hours yields an estimated ${lead.annualRoiMYR || 'RM 15,000'} in recovered labor per year, paying for itself in under 30 days.`;
+  const cs = cheat.closingCheatSheet || cheat;
+  const hookVal = cheat.hook || cs.bullet1_Hook || '';
+  const presVal = cheat.prescription || cs.bullet2_Prescription || '';
+  const mathVal = cheat.financialMath || cs.bullet3_FinancialMath || '';
+
+  document.getElementById('scriptHook').textContent = hookVal || `Hi ${lead.contactName || 'there'}, I reviewed your diagnostic for ${lead.companyName}. I noticed your team is dedicating significant hours weekly to ${lead.topPainPoint || 'manual workflows'}.`;
+  document.getElementById('scriptPrescription').textContent = presVal || `Rather than an expensive IT overhaul, our Phase 1 recommendation is deploying ${lead.recommendedPackage || 'Exabytes Cloud Suite'} to solve this immediately.`;
+  document.getElementById('scriptMath').textContent = mathVal || `Reclaiming these wasted hours yields an estimated ${lead.annualRoiMYR || 'RM 15,000'} in recovered labor per year, paying for itself in under 30 days.`;
 
   // Status selector
   document.getElementById('selectLeadStatus').value = lead.status || 'New';

@@ -216,7 +216,12 @@ export default {
               annualRoiMYR: roi.formatted ? roi.formatted.totalAnnualBenefit : 'RM 15,000',
               preferredSlot: 'Self-Service Blueprint',
               status: 'New',
-              salesCheatSheet: salesSheet,
+              salesCheatSheet: {
+                hook: salesSheet?.closingCheatSheet?.bullet1_Hook || '',
+                prescription: salesSheet?.closingCheatSheet?.bullet2_Prescription || '',
+                financialMath: salesSheet?.closingCheatSheet?.bullet3_FinancialMath || '',
+                ...salesSheet
+              },
               closingScript: formattedClosingScript
             };
 
