@@ -223,12 +223,10 @@ export async function onRequest(context) {
 
         LIVE_EDGE_LEADS.unshift(leadRecord);
         try {
-          if (context && typeof context.waitUntil === 'function') {
-            context.waitUntil(appendSheetLead(cleanEnv, leadRecord));
-          } else {
-            appendSheetLead(cleanEnv, leadRecord).catch(() => {});
-          }
-        } catch (e) {}
+          await appendSheetLead(cleanEnv, leadRecord);
+        } catch (e) {
+          console.error('appendSheetLead error:', e);
+        }
       }
 
       return jsonResponse({
