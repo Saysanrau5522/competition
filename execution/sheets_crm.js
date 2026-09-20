@@ -406,6 +406,77 @@ async function updateLeadStatus(leadId, newStatus) {
 }
 
 /**
+ * Deletes a lead from local cache and Google Sheets
+ */
+async function deleteLead(leadId) {
+  let deletedFromLocal = false;
+  let deletedFromSheets = false;
+
+  // 1. Remove from local JSON
+  try {
+    const leads = getLocalLeads();
+    const filtered = leads.filter(l => l.id !== leadId);
+    if (filtered.length !== leads.length) {
+      fs.writeFileSync(LOCAL_LEADS_FILE, JSON.stringify(filtered, null, 2), 'utf-8');
+      deletedFromLocal = true;
+      console.log(`[Local CRM] Removed lead ${leadId} from local storage`);
+    }
+  } catch (err) {
+    console.error('Error deleting local lead:', err);
+  }
+
+  // 2. Delete or clear row in Google Sheets if available
+  const client = getGoogleAuthClient();
+  if (client && !client.error) {
+    try {
+      const { sheets, sheetId } = client;
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: 'A:A'
+      });
+      const rows = res.data.values || [];
+      const rowIndex = rows.findIndex(r => r[0] === leadId); // 0-based
+      if (rowIndex !== -1) {
+        try {
+          const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
+          const numericSheetId = meta.data.sheets?.[0]?.properties?.sheetId || 0;
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: sheetId,
+            resource: {
+              requests: [
+                {
+                  deleteDimension: {
+                    range: {
+                      sheetId: numericSheetId,
+                      dimension: 'ROWS',
+                      startIndex: rowIndex,
+                      endIndex: rowIndex + 1
+                    }
+                  }
+                }
+              ]
+            }
+          });
+          deletedFromSheets = true;
+          console.log(`[Google Sheets CRM] Deleted row ${rowIndex + 1} for lead ${leadId}`);
+        } catch (delErr) {
+          console.warn('[CRM] Batch delete dimension failed, falling back to clear row values:', delErr.message);
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId: sheetId,
+            range: `A${rowIndex + 1}:R${rowIndex + 1}`
+          });
+          deletedFromSheets = true;
+        }
+      }
+    } catch (e) {
+      console.warn('[CRM] Google Sheets delete error:', e.message);
+    }
+  }
+
+  return { success: true, leadId, deletedFromLocal, deletedFromSheets };
+}
+
+/**
  * Main capture lead function
  */
 async function recordConsultationLead(leadPayload) {
@@ -435,5 +506,6 @@ module.exports = {
   getLocalLeads,
   fetchAllLeads,
   updateLeadStatus,
+  deleteLead,
   appendLeadToGoogleSheet
 };

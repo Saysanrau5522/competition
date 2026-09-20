@@ -390,7 +390,13 @@ function renderLeads() {
 
         <div class="lead-card-footer">
           <span>${formattedDate}</span>
-          <button class="btn-open-dossier" type="button">View AI Script &rarr;</button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-delete-lead" onclick="event.stopPropagation(); triggerDeleteLead('${lead.id}')" title="Remove Lead" type="button">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <span>Remove</span>
+            </button>
+            <button class="btn-open-dossier" type="button">View AI Script &rarr;</button>
+          </div>
         </div>
       </div>
     `;
@@ -524,6 +530,119 @@ function initModalListeners() {
       }
     });
   }
+
+  // Remove Lead button inside Dossier Modal
+  const btnDeleteCurrent = document.getElementById('btnDeleteCurrentLead');
+  if (btnDeleteCurrent) {
+    btnDeleteCurrent.addEventListener('click', () => {
+      if (activeLead) {
+        triggerDeleteLead(activeLead.id);
+      }
+    });
+  }
+
+  // Delete Confirmation Modal buttons
+  const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+  if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener('click', executeDeleteLead);
+  }
+
+  const btnCancelDelete = document.getElementById('btnCancelDelete');
+  if (btnCancelDelete) {
+    btnCancelDelete.addEventListener('click', closeDeleteConfirmModal);
+  }
+
+  // Close delete modal if clicked on overlay
+  const deleteModal = document.getElementById('deleteConfirmModal');
+  if (deleteModal) {
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        closeDeleteConfirmModal();
+      }
+    });
+  }
+}
+
+let pendingDeleteLeadId = null;
+
+function triggerDeleteLead(leadId) {
+  const lead = allLeads.find(l => l.id === leadId);
+  if (!lead) return;
+
+  pendingDeleteLeadId = leadId;
+  const modal = document.getElementById('deleteConfirmModal');
+  const msg = document.getElementById('deleteConfirmMessage');
+  if (msg) {
+    msg.innerHTML = `Are you sure you want to remove the lead for <strong>${escapeHtml(lead.companyName || 'this SME')}</strong> (${lead.id})?<br><br>This will permanently remove it from the consultant CRM and synced records.`;
+  }
+  if (modal) modal.classList.remove('d-none');
+}
+window.triggerDeleteLead = triggerDeleteLead;
+
+function closeDeleteConfirmModal() {
+  pendingDeleteLeadId = null;
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) modal.classList.add('d-none');
+}
+
+async function executeDeleteLead() {
+  if (!pendingDeleteLeadId) return;
+  const leadId = pendingDeleteLeadId;
+  const lead = allLeads.find(l => l.id === leadId);
+  const compName = lead?.companyName || leadId;
+
+  const confirmBtn = document.getElementById('btnConfirmDelete');
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Removing...';
+  }
+
+  try {
+    const res = await fetch(`/api/crm/leads/${leadId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      // Remove from allLeads array
+      allLeads = allLeads.filter(l => l.id !== leadId);
+      updateKpis(allLeads);
+      renderLeads();
+      renderMiniCalendar();
+      renderDaySchedule();
+
+      // If active dossier modal belongs to this lead, close it
+      if (activeLead && activeLead.id === leadId) {
+        document.getElementById('dossierModal')?.classList.add('d-none');
+        activeLead = null;
+      }
+
+      showToast(`Lead for ${compName} has been removed.`);
+    } else {
+      showToast(data.error || 'Failed to remove lead.');
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    showToast('Network error while deleting lead.');
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Yes, Remove';
+    }
+    closeDeleteConfirmModal();
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[m]);
 }
 
 /**
@@ -541,3 +660,4 @@ function showToast(msg) {
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
+

@@ -18,6 +18,7 @@ import {
   fetchSheetLeads,
   appendSheetLead,
   updateSheetLeadStatus,
+  deleteSheetLead,
   getGoogleAccessToken,
   cleanPrivateKey
 } from './functions/google_sheets.js';
@@ -28,7 +29,7 @@ function jsonResponse(data, status = 200) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     }
   });
@@ -84,8 +85,9 @@ const FALLBACK_PRIV_KEY = typeof atob !== 'undefined'
   ? atob('LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRGhIWnhvL2dDOVBWYmUKSjgwRkJvMnBnV3lpNGZNUWkrRGZhWDM0QWRuRVdKbzgvWW9lNVZsT0hTb3NYSUpIVW01MTRLajN2VEI0azhLagp2UWNDR1JneitsRERIVUs0ZDMvb1ozVkFUNUptK3JRbEdGSnMyVHphNkd1UjBhMTd1aEt1WE9IT0xPUGw3ZlFnCnpFZkw4ZUdWaTR5VjlROU9sN1Mxek1OOGlxeEVyekdKdWl4V05QSGY1aWZFbHFvKzRxTVNpNmgvTWY3T0RLenYKQTNhbGpyRHBMZWoxOEpBYUxGZ0hWM3BrekFrRERVZm9zSFA3YlBkZVpjUVErZER6cHYza0MzNUZLb01qWWR6dgp1bEZkb3BDbXA1MVhkQ3hibHhPMFd5d0QzeFkxcTF3YTNrbno4WlNzcHppRGYrRE1Dc2I1b2wxWlh5a2xvTHZSCmNDdnZHc0NuQWdNQkFBRUNnZ0VBQnpCMzUwNTlYWTNROFdWYUFkZ1V2QjRiQnhTcU81UU1DWGFJQkZ5aXhNZUQKbllFSFlUYzM0K3ZBaGd3cVNQYlQra1hEZjYzMkYxTzR1cHYxMWxaUTFKQWc5aXBBRUQ0WXdxWlRNMHVYUkZ5cgpWaWZ4c2ZJNkpFK1o1OTFIYWhVbU5aVlh6TXJZT0dhaURrNFgyT2FQcXNQN0tHcmNJMGxyQndkVUV1MG0xVWFuCnRyZ3JYN2R6TVljakZJWGVKeXBtL1cvRkdzOW02eGorZnRaMnEzeTJuTkdMVUZ0UDBaVWlhdmdLMTcvTE5mZjEKYnJvNVdyZlRsYU9nb2l0NlBIS1AyU2xrVW1rVmZ3ZTRkRk5nY0JDMFd3b1Y5Nm5obHE5aTUyWTNMT2FCNU5WVgpKSlVWcllGVG1UYmJWVkIvSW1CWjNDb2dzRlF1SHp0dmhnTEtiTVpDVVFLQmdRRDh6cTVneFBPMjBRZk16dHRlCmx2TlNSWk9oQVZIUHVVNysxZDRCZmNmSTlYTy9kL3VYbXJTY3hrc0FuWGlQYWRFeGdYV2svUzMydHltUHVwdFMKOExhTFp2NXFMWjBMQmpkbDNtMG9kS0E0TG9UY0lGNU5TYVpCWnZLYVc2Sk5GUnhjNjJhazUvanF2eHA2YnhVVApEUm9LN2txVjZMSyt3M3Z6eVVwb3Y5NlB1UUtCZ1FEajlXZEdCQ0MwNGs1eEJJbXRJb3ZiUnpBNkR1Qlc1TTRlCnBYR1lvY3hHam80OFZ4dDZTTXk5RTM0Qk5EcUhORTVpcEcyTzZKTWQxRGhoSU9ldFd3ZG40WkFFRjk2eU1zbm0KdTdRTnMraDhkZUZSRmRXL3NGYWl2OEdLeXlLaXpUeHdWYmtzSVVEUXdkUWJJM3VCY0R2dGhJNVpMa1liY1A5aQpOcFo3TWhaRFh3S0JnUURwQ2F4OHo1REpLUTdEb0x0ZkNrN3B1L0ZHTFcwNHlsMGpWQW45M2ZCWU1zcXI2UEltCjRoa3pteVp3UHJodm10K1hmdnJ2UitNaTFkeWQvU3BJM2xPblZSMll5c3RFNmtvT3dXWm1NSHV3emxEeWlYUGsKVXN2SzVoY2thdXZGbW53MnUxZzNFdzdGZGJ2MnVJYjR0TThZM0dnc29BQ0ZFTFltRjV0YnkrSmhJUUtCZ0F1YwpVamhFdVkyOUFSWE1qMTZjSmRkelZzZCtQbnJ1aUhrVElDZ1FCYUdLWFVCQmg0ckE3bnlxNDM0WU5PcnlCUlFOCkgrOXBkU1ROekZsV0hiYThyakhpVVQyRUlibWQwSjdKN0svTi9BZHEwYUVacFp0djFkblFQb0ZkTzFSamM3S2QKQ3lOdVJpamIxbnZUWU5VRTdHaDZtZTE4NStFNTdpZ0ljNzJ1bldldEFvR0FYbnJOZEJlMDJEdk9HekRwSW5DVQpicmxETnpPOFJJSEFQNlFrc0pqQkkxMzR3QXFGcG5WRS9JNDVKZStrY1RrM3FRdFRNRmMwSzgxS0NKMGhGYXdQClZheVVPWW1iaHllVmxMd1RCa1JmVWEwUkdpQi9uU1NRZnVPaDVYTS9CNEVqcjR2Z3dsZDBXSjhMeEhTQkF3QnIKYkkwS3dUY1VNTHlqM3ltQWVEbm96ZG89Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K')
   : '';
 
-// In-memory buffer for edge-captured leads
+// In-memory buffer for edge-captured leads & deleted tracking
 const LIVE_EDGE_LEADS = [];
+const DELETED_LEAD_IDS = new Set();
 
 export default {
   async fetch(request, env, ctx) {
@@ -346,7 +348,7 @@ export default {
 
           // 1. Edge submitted leads first
           for (const l of LIVE_EDGE_LEADS) {
-            if (l && l.id && !seen.has(l.id)) {
+            if (l && l.id && !seen.has(l.id) && !DELETED_LEAD_IDS.has(l.id)) {
               seen.add(l.id);
               combined.push(l);
             }
@@ -355,7 +357,7 @@ export default {
           // 2. Google Sheet leads
           if (Array.isArray(sheetLeads) && sheetLeads.length > 0) {
             for (const l of sheetLeads) {
-              if (l && l.id && !seen.has(l.id)) {
+              if (l && l.id && !seen.has(l.id) && !DELETED_LEAD_IDS.has(l.id)) {
                 seen.add(l.id);
                 combined.push(l);
               }
@@ -364,7 +366,11 @@ export default {
 
           // 3. Fallback seeds if completely empty
           if (combined.length === 0) {
-            combined.push(...FALLBACK_SEED_LEADS);
+            for (const s of FALLBACK_SEED_LEADS) {
+              if (!DELETED_LEAD_IDS.has(s.id)) {
+                combined.push(s);
+              }
+            }
           }
 
           return jsonResponse({
@@ -382,6 +388,22 @@ export default {
           const newStatus = body.status;
           const ok = await updateSheetLeadStatus(cleanEnv, leadId, newStatus);
           return jsonResponse({ success: true, leadId, status: newStatus, synced: ok });
+        }
+
+        // DELETE /api/crm/leads/:id
+        if (pathname.startsWith('/api/crm/leads/') && request.method === 'DELETE') {
+          const parts = pathname.split('/');
+          const leadId = parts[4];
+          if (leadId) {
+            DELETED_LEAD_IDS.add(leadId);
+            const edgeIdx = LIVE_EDGE_LEADS.findIndex(l => l.id === leadId);
+            if (edgeIdx !== -1) {
+              LIVE_EDGE_LEADS.splice(edgeIdx, 1);
+            }
+            const synced = await deleteSheetLead(cleanEnv, leadId);
+            return jsonResponse({ success: true, leadId, deleted: true, synced });
+          }
+          return jsonResponse({ error: 'Missing lead ID' }, 400);
         }
 
         return jsonResponse({ error: 'Endpoint not found', path: pathname }, 404);

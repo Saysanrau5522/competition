@@ -314,3 +314,91 @@ export async function updateSheetLeadStatus(env, leadId, newStatus) {
     return false;
   }
 }
+
+export async function deleteSheetLead(env, leadId) {
+  const sheetId = (env.GOOGLE_SHEET_ID || '').trim();
+  const email = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
+  const key = env.GOOGLE_PRIVATE_KEY;
+
+  if (!sheetId || !email || !key) return false;
+
+  try {
+    const tokenResult = await getGoogleAccessToken(email, key);
+    if (!tokenResult || typeof tokenResult !== 'string') return false;
+
+    // Find row
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:A`;
+    const getRes = await fetch(getUrl, {
+      headers: { Authorization: `Bearer ${tokenResult}` }
+    });
+    if (!getRes.ok) return false;
+
+    const data = await getRes.json();
+    const rows = data.values || [];
+    let targetRowIndex = -1;
+
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][0] === leadId) {
+        targetRowIndex = i; // 0-based index
+        break;
+      }
+    }
+
+    if (targetRowIndex === -1) return false;
+
+    // Attempt 1: batchUpdate deleteDimension to cleanly remove the row
+    try {
+      const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets.properties`, {
+        headers: { Authorization: `Bearer ${tokenResult}` }
+      });
+      let numericSheetId = 0;
+      if (metaRes.ok) {
+        const meta = await metaRes.json();
+        numericSheetId = meta.sheets?.[0]?.properties?.sheetId || 0;
+      }
+
+      const batchUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`;
+      const batchRes = await fetch(batchUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokenResult}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          requests: [
+            {
+              deleteDimension: {
+                range: {
+                  sheetId: numericSheetId,
+                  dimension: 'ROWS',
+                  startIndex: targetRowIndex,
+                  endIndex: targetRowIndex + 1
+                }
+              }
+            }
+          ]
+        })
+      });
+
+      if (batchRes.ok) return true;
+    } catch (e) {
+      console.warn('Batch delete row notice, clearing row values fallback:', e);
+    }
+
+    // Attempt 2: Clear row values
+    const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A${targetRowIndex + 1}:R${targetRowIndex + 1}:clear`;
+    const clearRes = await fetch(clearUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokenResult}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return clearRes.ok;
+  } catch (err) {
+    console.error('Error deleting lead from Google Sheet:', err);
+    return false;
+  }
+}
+

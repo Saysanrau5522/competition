@@ -17,7 +17,7 @@ const {
   generateAiDynamicQuestion,
   generateSalesCheatSheet
 } = require('./calculate_engine');
-const { recordConsultationLead, fetchAllLeads, updateLeadStatus } = require('./sheets_crm');
+const { recordConsultationLead, fetchAllLeads, updateLeadStatus, deleteLead } = require('./sheets_crm');
 const { generateBlueprintPdf, buildReportHtml } = require('./generate_pdf');
 
 const app = express();
@@ -313,6 +313,20 @@ app.patch('/api/crm/leads/:id/status', async (req, res) => {
     const { status } = req.body;
     const updated = await updateLeadStatus(id, status);
     res.json({ success: true, lead: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/crm/leads/:id
+ * Removes lead from Google Sheets and local CRM
+ */
+app.delete('/api/crm/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteLead(id);
+    res.json({ success: true, ...result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
